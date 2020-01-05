@@ -1,0 +1,51 @@
+D 1
+F 2
+M 1
+S 4
+
+sd0 0
+
+sf0 0
+sf1 0
+
+sm0 0
+
+ss0 0
+ss1 0
+ss2 0
+ss3 0
+
+cd0 0 0
+cd0 1 0
+
+cf0 0 0
+cf1 0 0
+
+cm0 0 0
+cm0 1 0
+cm0 2 0
+cm0 3 0
+
+ud0 0
+
+uf0 0
+uf1 0
+
+um0 0
+
+p0 0
+p1 0
+p2 0
+p3 0
+
+xdminmax0 0 0 0
+xdminmax0 1 0 0
+
+xfminmax0 0 0 0
+xfminmax1 0 0 0
+
+xmminmax0 0 0 0
+xmminmax0 1 0 0
+xmminmax0 2 0 0
+xmminmax0 3 0 0
+
