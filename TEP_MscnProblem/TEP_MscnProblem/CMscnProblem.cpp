@@ -680,15 +680,15 @@ bool CMscnProblem::b_write_range(FILE * pfFile, string sRangeName, vector<vector
 
 bool CMscnProblem::b_read_tab(FILE * pfFile, string sTabName, vector<double>& vTab)
 {
-	int i_dummy;
+	int i_row;
 
 	for(size_t i = 0; i < vTab.size(); ++i)
 	{	
 		float f_tmp;
 
-		fscanf(pfFile, (sTabName + TABLE_WRITE_FORMAT).c_str(), &i_dummy, &f_tmp);
+		fscanf(pfFile, (sTabName + TABLE_WRITE_FORMAT).c_str(), &i_row, &f_tmp);
 			
-		if(!b_set_value(vTab, i, f_tmp))
+		if(i_row != i || !b_set_value(vTab, i, f_tmp))
 			return false;
 	}
 
@@ -697,15 +697,16 @@ bool CMscnProblem::b_read_tab(FILE * pfFile, string sTabName, vector<double>& vT
 
 bool CMscnProblem::b_read_matrix(FILE * pfFile, string sMatrixName, vector<vector<double>>& vMatrix)
 {
-	int i_dummy;
+	int i_row;
+	int i_column;
 
 	for(size_t i = 0; i < vMatrix.size(); ++i)
 	{
 		for(size_t j = 0; j < vMatrix[0].size(); ++j)
 		{
 			float f_tmp;
-			fscanf(pfFile, (sMatrixName + MATRIX_WRITE_FORMAT).c_str(), &i_dummy, &i_dummy, &f_tmp);
-			if(!b_set_value(vMatrix, i, j, f_tmp))
+			fscanf(pfFile, (sMatrixName + MATRIX_WRITE_FORMAT).c_str(), &i_row, &i_column, &f_tmp);
+			if(i_row != i || i_column != j || !b_set_value(vMatrix, i, j, f_tmp))
 			   return false;
 		}	
 	}
@@ -715,7 +716,8 @@ bool CMscnProblem::b_read_matrix(FILE * pfFile, string sMatrixName, vector<vecto
 
 bool CMscnProblem::b_read_range(FILE * pfFile, string sRangeName, vector<vector<vector<double>>>& vRange)
 {
-	int i_dummy = 0;
+	int i_row;
+	int i_column;
 
 	for(size_t i = 0; i < vRange.size(); ++i)
 	{
@@ -724,8 +726,8 @@ bool CMscnProblem::b_read_range(FILE * pfFile, string sRangeName, vector<vector<
 			float f_tmp_min;
 			float f_tmp_max;
 
-			fscanf(pfFile, (sRangeName + RANGE_WRITE_FORMAT).c_str(), &i_dummy, &i_dummy, &f_tmp_min, &f_tmp_max);
-			if(!b_set_range_value(vRange, i, j, f_tmp_min, f_tmp_max))
+			fscanf(pfFile, (sRangeName + RANGE_WRITE_FORMAT).c_str(), &i_row, &i_column, &f_tmp_min, &f_tmp_max);
+			if(i_row != i || i_column != j || !b_set_range_value(vRange, i, j, f_tmp_min, f_tmp_max))
 				return false;
 		}
 	}
