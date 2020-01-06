@@ -153,6 +153,21 @@ bool CMscnProblem::bSetRangeXM(int iRow, int iColumn, double dMin, double dMax)
 	return b_set_range_value(v_minmax_xm, iRow, iColumn, dMin, dMax);
 }
 
+bool CMscnProblem::bSetGlobalRangeXD(double dMin, double dMax)
+{
+	return b_set_global_range_value(v_minmax_xd, dMin, dMax);
+}
+
+bool CMscnProblem::bSetGlobalRangeXF(double dMin, double dMax)
+{
+	return b_set_global_range_value(v_minmax_xf, dMin, dMax);
+}
+
+bool CMscnProblem::bSetGlobalRangeXM(double dMin, double dMax)
+{
+	return b_set_global_range_value(v_minmax_xm, dMin, dMax);
+}
+
 vector<double> CMscnProblem::vGetRangeXD(int iRow, int iColumn)
 {
 	return v_get_range(v_minmax_xd, iRow, iColumn);
@@ -436,7 +451,27 @@ bool CMscnProblem::bCreateSolutionFile(string sFileName)
 }
 
 void CMscnProblem::vGenerateInstance(int iInstanceSeed)
-{}
+{
+	CRandom c_rand;
+
+	if(iInstanceSeed == 0)
+		c_rand.vResetGlobalSeed();
+	else
+		c_rand.vSetGlobalSeed(iInstanceSeed);
+
+	v_random_fill_tab(v_production_cap_sd, RAND_SD_MIN, RAND_SD_MAX, c_rand);
+	v_random_fill_tab(v_production_cap_sf, RAND_SF_MIN, RAND_SF_MAX, c_rand);
+	v_random_fill_tab(v_contract_ud, RAND_UD_MIN, RAND_UD_MAX, c_rand);
+	v_random_fill_tab(v_contract_uf, RAND_UF_MIN, RAND_UF_MAX, c_rand);
+	v_random_fill_tab(v_contract_um, RAND_UM_MIN, RAND_UM_MAX, c_rand);
+	v_random_fill_tab(v_capacity_sm, RAND_SM_MIN, RAND_SM_MAX, c_rand);
+	v_random_fill_tab(v_need_ss, RAND_SS_MIN, RAND_SS_MAX, c_rand);
+	v_random_fill_tab(v_income_p, RAND_P_MIN, RAND_P_MAX, c_rand);
+
+	v_random_fill_matrix(v_costs_cd, RAND_CD_MIN, RAND_CD_MAX, c_rand);
+	v_random_fill_matrix(v_costs_cf, RAND_CF_MIN, RAND_CF_MAX, c_rand);
+	v_random_fill_matrix(v_costs_cm, RAND_CM_MIN, RAND_CM_MAX, c_rand);
+}
 
 void CMscnProblem::v_update_matrix_size(vector<vector<double>>& vMatrix, int iHeight, int iWidth)
 {
@@ -519,6 +554,20 @@ bool CMscnProblem::b_set_range_value(vector<vector<vector<double>>>& vRange, int
 	}
 
 	return false;
+}
+
+bool CMscnProblem::b_set_global_range_value(vector<vector<vector<double>>>& vRange, double dMin, double dMax)
+{
+	for(size_t i = 0; i < vRange.size(); ++i)
+	{
+		for(size_t j = 0; j < vRange[0].size(); ++j)
+		{
+			if(!b_set_range_value(vRange, i, j, dMin, dMax))
+				return false;
+		}
+	}
+
+	return true;
 }
 
 vector<double> CMscnProblem::v_get_range(vector<vector<vector<double>>>& vRange, int iRow, int iColumn)
@@ -898,6 +947,23 @@ double CMscnProblem::d_calculate_total_income(vector<double> &vIncome, vector<ve
 int CMscnProblem::i_has_contract(vector<vector<double>> &vMatrix, int iInput, int iOutput)
 {
 	return (vMatrix[iInput][iOutput] > 0) ? 1 : 0;
+}
+
+void CMscnProblem::v_random_fill_tab(vector<double>& vTab, double dMinValue, double dMaxValue, CRandom & cRand)
+{
+	for(size_t i = 0; i < vTab.size(); ++i)
+		b_set_value(vTab, i, cRand.dRange(dMinValue, dMaxValue));
+}
+
+void CMscnProblem::v_random_fill_matrix(vector<vector<double>>& vMatrix, double dMinValue, double dMaxValue, CRandom & cRand)
+{
+	for(size_t i = 0; i < vMatrix.size(); ++i)
+	{
+		for(size_t j = 0; j < vMatrix[0].size(); ++j)
+		{
+			b_set_value(vMatrix[i], j, cRand.dRange(dMinValue, dMaxValue));
+		}
+	}
 }
 
 vector<double> vLoadSolutionFromFile(string sFileName)

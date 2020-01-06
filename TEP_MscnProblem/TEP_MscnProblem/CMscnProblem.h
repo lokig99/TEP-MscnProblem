@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <string>
+#include "CRandom.h"
 
 //ERROR CODES
 #define INVALID_PROD_CAP_SD 1
@@ -43,6 +44,41 @@
 #define INSTANCE_TYPE_AMOUNT 4
 #define FILE_FORMAT ".txt"
 
+//RANDOMLY GENERATED INSTANCE - RANGES
+#define RAND_CD_MIN 1
+#define RAND_CD_MAX 100
+
+#define RAND_CF_MIN 1
+#define RAND_CF_MAX 100
+
+#define RAND_CM_MIN 1
+#define RAND_CM_MAX 100
+
+#define RAND_SD_MIN 50
+#define RAND_SD_MAX 100
+
+#define RAND_SF_MIN 50
+#define RAND_SF_MAX 100
+
+#define RAND_SM_MIN 50
+#define RAND_SM_MAX 100
+
+#define RAND_SS_MIN 50
+#define RAND_SS_MAX 100
+
+#define RAND_UD_MIN 1
+#define RAND_UD_MAX 100
+
+#define RAND_UF_MIN 1
+#define RAND_UF_MAX 100
+
+#define RAND_UM_MIN 1
+#define RAND_UM_MAX 100
+
+#define RAND_P_MIN 1
+#define RAND_P_MAX 100
+
+
 using std::vector;
 using std::string;
 
@@ -71,6 +107,9 @@ public:
 	bool bSetRangeXD(int iRow, int iColumn, double dMin, double dMax);
 	bool bSetRangeXF(int iRow, int iColumn, double dMin, double dMax);
 	bool bSetRangeXM(int iRow, int iColumn, double dMin, double dMax);
+	bool bSetGlobalRangeXD(double dMin, double dMax);
+	bool bSetGlobalRangeXF(double dMin, double dMax);
+	bool bSetGlobalRangeXM(double dMin, double dMax);
 	
 	vector<double> vGetRangeXD(int iRow, int iColumn);
 	vector<double> vGetRangeXF(int iRow, int iColumn);
@@ -117,6 +156,7 @@ private:
 	bool b_set_value(vector<vector<double>> &vMatrix, int iRow, int iColumn, double dValue);
 	bool b_set_value(vector<double> &vTable, int iPosition, double dValue);
 	bool b_set_range_value(vector<vector<vector<double>>> &vRange, int iRow, int iColumn, double dMin, double dMax);
+	bool b_set_global_range_value(vector<vector<vector<double>>> &vRange, double dMin, double dMax);
 	vector<double> v_get_range(vector<vector<vector<double>>> &vRange, int iRow, int iColumn);
 	
 	bool b_validate_prod_cap_sd();
@@ -145,5 +185,8 @@ private:
 	double d_calculate_subtotal_contract(vector<double> &vContract, vector<vector<double>> &vAmount);
 	double d_calculate_total_income(vector<double> &vIncome, vector<vector<double>> &vAmount);
 	int i_has_contract(vector<vector<double>> &vMatrix, int iInput, int iOutput);
+
+	void v_random_fill_tab(vector<double> &vTab, double dMinValue, double dMaxValue, CRandom &cRand);
+	void v_random_fill_matrix(vector<vector<double>> &vMatrix, double dMinValue, double dMaxValue, CRandom &cRand);
 };
 

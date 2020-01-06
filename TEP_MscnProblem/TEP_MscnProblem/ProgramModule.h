@@ -51,6 +51,37 @@ void vCreateEmptyProblemFile()
 		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
 }
 
+void vCreateRandomProblemFile()
+{
+	CMscnProblem c_problem = v_input_data();
+
+	std::cout << "Enter seed: ";
+	int i_seed;
+	std::cin >> i_seed;
+
+	std::cout << "Input file name: ";
+	std::string s_file_name;
+	std::cin >> s_file_name;
+
+	c_problem.vGenerateInstance(i_seed);
+
+	std::cout << "\nEnter global range for solutions\nMinimal value: ";
+	int i_max;
+	int i_min;
+	std::cin >> i_min;
+	std::cout << "Maximal value: ";
+	std::cin >> i_max;
+
+	c_problem.bSetGlobalRangeXD(i_min, i_max);
+	c_problem.bSetGlobalRangeXF(i_min, i_max);
+	c_problem.bSetGlobalRangeXM(i_min, i_max);
+
+	if(c_problem.bSaveToFile(s_file_name))
+		std::cout << "\nCreated file: \"" << s_file_name << "\"\n";
+	else
+		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
+}
+
 void vCreateEmptySolutionFile()
 {
 	CMscnProblem c_problem = v_input_data();
@@ -99,7 +130,8 @@ void vShowMenu(CMscnProblem &cProblem)
 	std::cout << "[2] Create empty solution file\n";
 	std::cout << "[3] Load problem file\n";
 	std::cout << "[4] Get quality of solution from file\n";
-	std::cout << "[5] Exit program\n";
+	std::cout << "[5] Create random problem file\n";
+	std::cout << "[9] Exit program\n";
 	std::cout << "\nChoose option: ";
 
 	int input;
@@ -124,6 +156,10 @@ void vShowMenu(CMscnProblem &cProblem)
 		vShowMenu(cProblem);
 		break;
 	case 5:
+		vCreateRandomProblemFile();
+		vShowMenu(cProblem);
+		break;
+	case 9:
 		std::cout << "\n\tExiting program...\n";
 		break;
 	default:
