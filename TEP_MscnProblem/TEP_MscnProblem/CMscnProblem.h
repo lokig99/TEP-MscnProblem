@@ -55,16 +55,16 @@
 #define RAND_CM_MAX 100
 
 #define RAND_SD_MIN 50
-#define RAND_SD_MAX 100
+#define RAND_SD_MAX 200
 
 #define RAND_SF_MIN 50
-#define RAND_SF_MAX 100
+#define RAND_SF_MAX 200
 
 #define RAND_SM_MIN 50
-#define RAND_SM_MAX 100
+#define RAND_SM_MAX 200
 
 #define RAND_SS_MIN 50
-#define RAND_SS_MAX 100
+#define RAND_SS_MAX 200
 
 #define RAND_UD_MIN 1
 #define RAND_UD_MAX 100
@@ -83,11 +83,14 @@ using std::vector;
 using std::string;
 
 vector<double> vLoadSolutionFromFile(string sFileName);
+bool bSaveSolutionToFile(vector<double> vSolution, string sFileName);
 
 class CMscnProblem
 {
 public:
 	CMscnProblem();
+
+	friend class CRandomSearch;
 
 	bool bSetDeliverers(int iAmount);
 	bool bSetFactiories(int iAmount);
@@ -121,6 +124,7 @@ public:
 	bool bSaveToFile(string sFileName);
 	bool bLoadFromFile(string sFileName);
 	bool bCreateSolutionFile(string sFileName);
+	vector<double> vGetSolutionVector();
 
 	void vGenerateInstance(int iInstanceSeed);
 	

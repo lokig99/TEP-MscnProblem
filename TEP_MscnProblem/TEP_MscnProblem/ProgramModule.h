@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include "CMscnProblem.h"
+#include "CRandomSearch.h"
 
 CMscnProblem v_input_data()
 {
@@ -95,6 +96,33 @@ void vCreateEmptySolutionFile()
 		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
 }
 
+void vCreateSolutionFile(CMscnProblem &cProblem)
+{
+	std::cout << "\nInput file name: ";
+	std::string s_file_name;
+	std::cin >> s_file_name;
+	if(cProblem.bCreateSolutionFile(s_file_name))
+		std::cout << "\nCreated file: \"" << s_file_name << "\"\n";
+	else
+		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
+}
+
+void vGenerateSolutionRS(CMscnProblem &cProblem)
+{
+	std::cout << "Enter max number of iterations: ";
+	int i_input;
+	std::cin >> i_input;
+
+	CRandomSearch c_search(cProblem);
+	vector<double> v_solution;
+
+	double d_quality = c_search.dGenerateSolution(i_input, v_solution);
+
+	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
+
+	vCreateSolutionFile(cProblem);
+}
+
 void vLoadProblemFile(CMscnProblem &cProblem)
 {
 	std::cout << "Input file name: ";
@@ -131,6 +159,7 @@ void vShowMenu(CMscnProblem &cProblem)
 	std::cout << "[3] Load problem file\n";
 	std::cout << "[4] Get quality of solution from file\n";
 	std::cout << "[5] Create random problem file\n";
+	std::cout << "[6] Generate optimal solution using rand-search and save to file\n";
 	std::cout << "[9] Exit program\n";
 	std::cout << "\nChoose option: ";
 
@@ -157,6 +186,10 @@ void vShowMenu(CMscnProblem &cProblem)
 		break;
 	case 5:
 		vCreateRandomProblemFile();
+		vShowMenu(cProblem);
+		break;
+	case 6:
+		vGenerateSolutionRS(cProblem);
 		vShowMenu(cProblem);
 		break;
 	case 9:

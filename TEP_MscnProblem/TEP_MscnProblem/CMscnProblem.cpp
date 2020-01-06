@@ -450,6 +450,45 @@ bool CMscnProblem::bCreateSolutionFile(string sFileName)
 	return false;
 }
 
+vector<double> CMscnProblem::vGetSolutionVector()
+{
+	vector<double> v_tmp;
+
+	v_tmp.push_back(i_deliverers);
+	v_tmp.push_back(i_factories);
+	v_tmp.push_back(i_magazines);
+	v_tmp.push_back(i_shops);
+
+	//push xd matrix
+	for(size_t i = 0; i < v_amount_xd.size(); ++i)
+	{
+		for(size_t j = 0; j < v_amount_xd[0].size(); ++j)
+		{
+			v_tmp.push_back(v_amount_xd[i][j]);
+		}
+	}
+
+	//push xf matrix
+	for(size_t i = 0; i < v_amount_xf.size(); ++i)
+	{
+		for(size_t j = 0; j < v_amount_xf[0].size(); ++j)
+		{
+			v_tmp.push_back(v_amount_xf[i][j]);
+		}
+	}
+
+	//push xm matrix
+	for(size_t i = 0; i < v_amount_xm.size(); ++i)
+	{
+		for(size_t j = 0; j < v_amount_xm[0].size(); ++j)
+		{
+			v_tmp.push_back(v_amount_xm[i][j]);
+		}
+	}
+
+	return v_tmp;
+}
+
 void CMscnProblem::vGenerateInstance(int iInstanceSeed)
 {
 	CRandom c_rand;
@@ -1000,4 +1039,9 @@ vector<double> vLoadSolutionFromFile(string sFileName)
 	}
 
 	return v_output;	
+}
+
+bool bSaveSolutionToFile(vector<double> vSolution, string sFileName)
+{
+	return false;
 }
