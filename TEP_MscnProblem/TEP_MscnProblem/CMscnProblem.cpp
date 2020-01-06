@@ -435,6 +435,9 @@ bool CMscnProblem::bCreateSolutionFile(string sFileName)
 	return false;
 }
 
+void CMscnProblem::vGenerateInstance(int iInstanceSeed)
+{}
+
 void CMscnProblem::v_update_matrix_size(vector<vector<double>>& vMatrix, int iHeight, int iWidth)
 {
 	vector<vector<double>> v_tmp;

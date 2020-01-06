@@ -82,6 +82,8 @@ public:
 	bool bSaveToFile(string sFileName);
 	bool bLoadFromFile(string sFileName);
 	bool bCreateSolutionFile(string sFileName);
+
+	void vGenerateInstance(int iInstanceSeed);
 	
 private:
 	int i_deliverers;
