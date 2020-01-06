@@ -83,7 +83,6 @@ using std::vector;
 using std::string;
 
 vector<double> vLoadSolutionFromFile(string sFileName);
-bool bSaveSolutionToFile(vector<double> vSolution, string sFileName);
 
 class CMscnProblem
 {

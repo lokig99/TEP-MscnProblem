@@ -1040,8 +1040,3 @@ vector<double> vLoadSolutionFromFile(string sFileName)
 
 	return v_output;	
 }
-
-bool bSaveSolutionToFile(vector<double> vSolution, string sFileName)
-{
-	return false;
-}
