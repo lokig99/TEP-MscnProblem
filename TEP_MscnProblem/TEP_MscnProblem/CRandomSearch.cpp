@@ -1,21 +1,6 @@
 #include "pch.h"
 #include "CRandomSearch.h"
 
-CRandomSearch::CRandomSearch()
-{
-	pc_problem = NULL;
-}
-
-CRandomSearch::CRandomSearch(CMscnProblem & cProblem)
-{
-	pc_problem = &cProblem;
-}
-
-void CRandomSearch::vSetInstance(CMscnProblem & cProblem)
-{
-	pc_problem = &cProblem;
-}
-
 double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSolution)
 {
 	if(pc_problem == NULL || iIterations < 1)
@@ -87,21 +72,6 @@ double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSoluti
 	pc_problem->b_apply_solution(v_best_solution, i_err_code);
 	vSolution = v_best_solution;
 	return d_best_quality;
-}
-
-bool CRandomSearch::b_get_empty_solution(vector<double>& vOutput)
-{
-	if(pc_problem == NULL)
-		return false;
-
-	vector<double> v_tmp;
-	v_tmp.push_back(pc_problem->i_deliverers);
-	v_tmp.push_back(pc_problem->i_factories);
-	v_tmp.push_back(pc_problem->i_magazines);
-	v_tmp.push_back(pc_problem->i_shops);
-
-	vOutput = v_tmp;
-	return true;
 }
 
 bool CRandomSearch::b_fill_matrix(vector<vector<double>>& vMatrix, vector<vector<vector<double>>>& vRange, double dTopLimit)
