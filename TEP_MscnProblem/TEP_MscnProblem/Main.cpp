@@ -1,22 +1,38 @@
-﻿// Lista9.cpp : Ten plik zawiera funkcję „main”. W nim rozpoczyna się i kończy wykonywanie programu.
+﻿// Main.cpp : Ten plik zawiera funkcję „main”. W nim rozpoczyna się i kończy wykonywanie programu.
 //
 
 #include "pch.h"
 #include <iostream>
 #include "CMscnProblem.h"
 #include "ProgramModule.h"
-#include "CRandom.h"
 
 
 int main()
 {
 	CMscnProblem c_problem;
-
 	vShowMenu(c_problem);
+
+	return 0;
 }
 
+//Odpowiedzi do listy 10
 
-//Uwagi do rozwiązania
+//Ustal relację, którą
+//zachodzi pomiędzy klasami CRandomSearch i CMscnProblem.Czy jest to agregacja silna,
+//słaba, dziedziczenie, a może jakaś inna relacja ?
+
+/*W moim rozwiązaniu mamy do czynienia z agregacją słabą - klasa CMscnProblem jest
+składową CRandomSearch ale nie jest z nią ściśle związana, czyli czas życia części i
+całości są niezależne.
+
+CRandomSearch przechowuje wskaznik do danego obiektu klasy CMscnProblem i używa go tylko jako
+wymienne narzędzie do wykonywania obliczeń. Agregacja silna byłaby nie na miejscu, ponieważ obiekt klasy
+CMscnProblem, może być składową wielu obiektów i usunięcie go przez jeden z tych obiektów powodowałoby błędy działania programu*/
+
+
+
+//Uwagi do rozwiązania - Lista 9
+
 /*Do reprezentacji tablic i macierzy wykorzystałem strukturę danych vector z 
 biblioteki standardowej (tylko funkcjonalości z C++98) zamiast tablic dynamicznych 
 ze względów praktycznych (metod: np. size(), brak potrzeby definiowania specjalnych destruktorów itp.)

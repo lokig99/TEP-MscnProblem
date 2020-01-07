@@ -126,6 +126,7 @@ bool CRandomSearch::b_fill_safe_xd()
 	return true;
 }
 
+//fills xf matrix with random values which satisfy constraints of CMscnProblem
 bool CRandomSearch::b_fill_safe_xf()
 {
 	if(pc_problem == NULL)
@@ -144,7 +145,7 @@ bool CRandomSearch::b_fill_safe_xf()
 			pc_problem->v_amount_xf[i][j] = 
 				c_rand.dRange(v_range[i][j][0], 
 							  std::min(v_range[i][j][1], 
-								std::min(d_factory_prod_cap_left, pc_problem->v_capacity_sm[j])));
+							  std::min(d_factory_prod_cap_left, pc_problem->v_capacity_sm[j])));
 
 			if(pc_problem->v_amount_xf[i][j] < ROUND_TO_ZERO_BELOW)
 				pc_problem->v_amount_xf[i][j] = 0.0;
@@ -156,6 +157,7 @@ bool CRandomSearch::b_fill_safe_xf()
 	return true;
 }
 
+//fills xm matrix with random values which satisfy constraints of CMscnProblem
 bool CRandomSearch::b_fill_safe_xm()
 {
 	if(pc_problem == NULL)
@@ -174,7 +176,7 @@ bool CRandomSearch::b_fill_safe_xm()
 			pc_problem->v_amount_xm[i][j] = 
 				c_rand.dRange(v_range[i][j][0], 
 							  std::min(v_range[i][j][1], 
-								std::min(d_magazine_cap_left, pc_problem->v_need_ss[j])));
+							  std::min(d_magazine_cap_left, pc_problem->v_need_ss[j])));
 
 			if(pc_problem->v_amount_xm[i][j] < ROUND_TO_ZERO_BELOW)
 				pc_problem->v_amount_xm[i][j] = 0.0;
