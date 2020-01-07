@@ -46,13 +46,13 @@
 
 //RANDOMLY GENERATED INSTANCE - RANGES
 #define RAND_CD_MIN 1
-#define RAND_CD_MAX 100
+#define RAND_CD_MAX 10
 
 #define RAND_CF_MIN 1
-#define RAND_CF_MAX 100
+#define RAND_CF_MAX 10
 
 #define RAND_CM_MIN 1
-#define RAND_CM_MAX 100
+#define RAND_CM_MAX 10
 
 #define RAND_SD_MIN 50
 #define RAND_SD_MAX 200
@@ -75,7 +75,7 @@
 #define RAND_UM_MIN 1
 #define RAND_UM_MAX 100
 
-#define RAND_P_MIN 1
+#define RAND_P_MIN 10
 #define RAND_P_MAX 100
 
 

@@ -12,16 +12,7 @@ int main()
 {
 	CMscnProblem c_problem;
 
-	vShowMenu(c_problem);	
-
-	/*
-	CRandom c_rand;
-
-	c_rand.vResetGlobalSeed();
-
-	for(int i = 0; i < 20; ++i)
-		std::cout << c_rand.dRange(0, 1) << "\n";
-	*/
+	vShowMenu(c_problem);
 }
 
 
