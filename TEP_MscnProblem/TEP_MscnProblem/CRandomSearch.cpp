@@ -1,13 +1,21 @@
 #include "pch.h"
 #include "CRandomSearch.h"
 
-double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSolution)
+double CRandomSearch::dGenerateSolution(int iIterations, vector<double>& vSolution)
+{
+	return dGenerateSolution(iIterations, vSolution, 0);
+}
+
+double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSolution, int iSeed)
 {
 	if(pc_problem == NULL || iIterations < 1)
 		return -1.0;
 
 	CRandom  c_rand;
-	c_rand.vResetGlobalSeed();
+	if(iSeed == 0)
+		c_rand.vResetGlobalSeed();
+	else
+		c_rand.vSetGlobalSeed(iSeed);
 
 	vector<double> v_best_solution;
 	double d_best_quality;
@@ -19,34 +27,30 @@ double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSoluti
 
 		while(!pc_problem->bConstraintsSatisfied(v_solution, i_err_code))
 		{
-			double d_xd_sum, d_xf_sum = INFINITY, d_xm_sum = INFINITY;
 			bool b_is_filled = false;
 
 			//fill xd
 			while(!b_is_filled || !pc_problem->b_validate_prod_cap_sd())
 			{
-				b_fill_matrix(pc_problem->v_amount_xd, pc_problem->v_minmax_xd);
-				d_xd_sum = d_matrix_sum_of_values(pc_problem->v_amount_xd);
+				b_fill_safe_xd();
 				b_is_filled = true;
 			}
 			
 			//fill xf
 			b_is_filled = false;
-			while(!b_is_filled || d_xd_sum < d_xf_sum || !pc_problem->b_validate_prod_cap_sf()
+			while(!b_is_filled || !pc_problem->b_validate_prod_cap_sf()
 				  || !pc_problem->b_validate_amount_xd_xf())
 			{
-				b_fill_matrix(pc_problem->v_amount_xf, pc_problem->v_minmax_xf, d_xd_sum);
-				d_xf_sum = d_matrix_sum_of_values(pc_problem->v_amount_xf);
+				b_fill_safe_xf();
 				b_is_filled = true;
 			}
 
 			//fill xm
 			b_is_filled = false;
-			while(!b_is_filled || d_xf_sum < d_xm_sum || !pc_problem->b_validate_amount_sm()
+			while(!b_is_filled || !pc_problem->b_validate_amount_sm()
 				  || !pc_problem->b_validate_amount_ss() || !pc_problem->b_validate_amount_xf_xm())
 			{
-				b_fill_matrix(pc_problem->v_amount_xm, pc_problem->v_minmax_xm, d_xf_sum);
-				d_xm_sum = d_matrix_sum_of_values(pc_problem->v_amount_xm);
+				b_fill_safe_xm();
 				b_is_filled = true;
 			}
 
@@ -74,64 +78,111 @@ double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSoluti
 	return d_best_quality;
 }
 
-bool CRandomSearch::b_fill_matrix(vector<vector<double>>& vMatrix, vector<vector<vector<double>>>& vRange, double dTopLimit)
+double CRandomSearch::dGenerateSolution(int iIterations, int iSeed)
 {
-	CRandom c_rand;
+	vector<double> v_dummy;
+	return dGenerateSolution(iIterations, v_dummy, iSeed);
+}
 
+double CRandomSearch::d_resources_amount(vector<vector<double>> &vMatrix, int iPosition)
+{
+	double d_res = 0.0;
+
+	if(iPosition >= vMatrix[0].size())
+		return d_res;
+
+	for(size_t i = 0; i < vMatrix.size(); ++i)
+		d_res += vMatrix[i][iPosition];
+
+	return d_res;
+}
+
+//fills xd matrix with random values which satisfy constraints of CMscnProblem
+bool CRandomSearch::b_fill_safe_xd()
+{
 	if(pc_problem == NULL)
 		return false;
 
-	double d_sum = 0.0;
+	CRandom c_rand;
+	vector<vector<vector<double>>> v_range = pc_problem->v_minmax_xd;
 
-	for(size_t i = 0; i < vMatrix.size(); ++i)
+	for(size_t i = 0; i < pc_problem->v_amount_xd.size(); ++i)
 	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
-		{
-			vMatrix[i][j] = c_rand.dRange(vRange[i][j][0], std::min(vRange[i][j][1], dTopLimit - d_sum));
-			
-			if(vMatrix[i][j] < ROUND_TO_ZERO_BELOW)
-				vMatrix[i][j] = 0.0;
+		double d_deliverers_prod_cap_left = pc_problem->v_production_cap_sd[i];
 
-			d_sum += vMatrix[i][j];
+		for(size_t j = 0; j < pc_problem->v_amount_xd[0].size(); ++j)
+		{
+			pc_problem->v_amount_xd[i][j] = 
+				c_rand.dRange(v_range[i][j][0], std::min(v_range[i][j][1], 
+							  std::min(d_deliverers_prod_cap_left, pc_problem->v_production_cap_sf[j])));
+
+			if(pc_problem->v_amount_xd[i][j] < ROUND_TO_ZERO_BELOW)
+				pc_problem->v_amount_xd[i][j] = 0.0;
+
+			d_deliverers_prod_cap_left -= pc_problem->v_amount_xd[i][j];
 		}
 	}
 
 	return true;
 }
 
-bool CRandomSearch::b_fill_matrix(vector<vector<double>>& vMatrix, vector<vector<vector<double>>>& vRange)
+bool CRandomSearch::b_fill_safe_xf()
 {
-	CRandom c_rand;
-
 	if(pc_problem == NULL)
 		return false;
 
-	for(size_t i = 0; i < vMatrix.size(); ++i)
-	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
-		{
-			vMatrix[i][j] = c_rand.dRange(vRange[i][j][0], vRange[i][j][1]);
+	CRandom c_rand;
+	vector<vector<vector<double>>> v_range = pc_problem->v_minmax_xf;
 
-			if(vMatrix[i][j] < ROUND_TO_ZERO_BELOW)
-				vMatrix[i][j] = 0.0;
+	for(size_t i = 0; i < pc_problem->v_amount_xf.size(); ++i)
+	{
+		double d_products_left = d_resources_amount(pc_problem->v_amount_xd, i);
+		double d_factory_prod_cap_left = std::min(pc_problem->v_production_cap_sf[i], d_products_left);
+		
+		for(size_t j = 0; j < pc_problem->v_amount_xf[0].size(); ++j)
+		{
+			pc_problem->v_amount_xf[i][j] = 
+				c_rand.dRange(v_range[i][j][0], 
+							  std::min(v_range[i][j][1], 
+								std::min(d_factory_prod_cap_left, pc_problem->v_capacity_sm[j])));
+
+			if(pc_problem->v_amount_xf[i][j] < ROUND_TO_ZERO_BELOW)
+				pc_problem->v_amount_xf[i][j] = 0.0;
+
+			d_factory_prod_cap_left -= pc_problem->v_amount_xf[i][j];
 		}
 	}
 
 	return true;
 }
 
-double CRandomSearch::d_matrix_sum_of_values(vector<vector<double>>& vMatrix)
+bool CRandomSearch::b_fill_safe_xm()
 {
-	double d_sum = 0.0;
+	if(pc_problem == NULL)
+		return false;
 
-	for(size_t i = 0; i < vMatrix.size(); ++i)
+	CRandom c_rand;
+	vector<vector<vector<double>>> v_range = pc_problem->v_minmax_xm;
+
+	for(size_t i = 0; i < pc_problem->v_amount_xm.size(); ++i)
 	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
+		double d_products_left = d_resources_amount(pc_problem->v_amount_xf, i);
+		double d_magazine_cap_left = std::min(pc_problem->v_capacity_sm[i], d_products_left);
+
+		for(size_t j = 0; j < pc_problem->v_amount_xm[0].size(); ++j)
 		{
-			d_sum += vMatrix[i][j];
+			pc_problem->v_amount_xm[i][j] = 
+				c_rand.dRange(v_range[i][j][0], 
+							  std::min(v_range[i][j][1], 
+								std::min(d_magazine_cap_left, pc_problem->v_need_ss[j])));
+
+			if(pc_problem->v_amount_xm[i][j] < ROUND_TO_ZERO_BELOW)
+				pc_problem->v_amount_xm[i][j] = 0.0;
+
+			d_magazine_cap_left -= pc_problem->v_amount_xm[i][j];
 		}
 	}
 
-	return d_sum;
+	return true;
 }
 

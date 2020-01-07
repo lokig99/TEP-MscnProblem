@@ -11,12 +11,15 @@ public:
 	CRandomSearch(CMscnProblem &cProblem) { pc_problem = &cProblem; }
 	void vSetInstance(CMscnProblem &cProblem) { pc_problem = &cProblem; }
 	double dGenerateSolution(int iIterations, vector<double> &vSolution);
+	double dGenerateSolution(int iIterations, vector<double> &vSolution, int iSeed);
+	double dGenerateSolution(int iIterations, int iSeed);
 
 private:
 	CMscnProblem *pc_problem;
 
-	bool b_fill_matrix(vector<vector<double>> &vMatrix, vector<vector<vector<double>>> &vRange, double dTopLimit);
-	bool b_fill_matrix(vector<vector<double>> &vMatrix, vector<vector<vector<double>>> &vRange);
-	double d_matrix_sum_of_values(vector<vector<double>> &vMatrix);
+	double d_resources_amount(vector<vector<double>> &vMatrix, int iPosition);
+	bool b_fill_safe_xd();
+	bool b_fill_safe_xf();
+	bool b_fill_safe_xm();
 };
 

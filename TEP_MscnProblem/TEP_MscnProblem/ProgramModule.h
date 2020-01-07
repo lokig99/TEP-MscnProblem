@@ -56,7 +56,7 @@ void vCreateRandomProblemFile()
 {
 	CMscnProblem c_problem = v_input_data();
 
-	std::cout << "Enter seed: ";
+	std::cout << "Enter seed (0 = default seed): ";
 	int i_seed;
 	std::cin >> i_seed;
 
@@ -109,14 +109,17 @@ void vCreateSolutionFile(CMscnProblem &cProblem)
 
 void vGenerateSolutionRS(CMscnProblem &cProblem)
 {
+	std::cout << "Enter seed (0 = default seed): ";
+	int i_seed;
+	std::cin >> i_seed;
+
 	std::cout << "Enter max number of iterations: ";
 	int i_input;
 	std::cin >> i_input;
 
 	CRandomSearch c_search(cProblem);
-	vector<double> v_solution;
 
-	double d_quality = c_search.dGenerateSolution(i_input, v_solution);
+	double d_quality = c_search.dGenerateSolution(i_input, i_seed);
 
 	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
 
