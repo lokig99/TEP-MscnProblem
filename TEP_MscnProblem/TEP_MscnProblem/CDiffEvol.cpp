@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "CDiffEvol.h"
-#include <iostream>
 
 
 double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double>& vSolution)
@@ -24,9 +23,8 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	vector<double> v_best_solution;
 	vector<double> v_tmp;
 	double d_best_quality;
-	int i_err_code;
+	int i_err_code = 0;
 	int i_fit_calls = 0;
-	int i_error_count = 0;
 
 	//initialize population
 	for(int i = 0; i < iInitPopulation; ++i)
@@ -39,16 +37,16 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	{
 		for(size_t i = 0; i < v_population.size(); ++i)
 		{
-			Indiv **p_ind = &v_population[i];
+			Indiv *p_ind = v_population[i];
 			Indiv *p_base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
 			Indiv *p_add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
 			Indiv *p_add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv *p_ind_new = new Indiv(v_tmp);
-
-			vector<Indiv*> v_indivs = { *p_ind, p_base, p_add0, p_add1 };
+			vector<Indiv*> v_indivs = { p_ind, p_base, p_add0, p_add1 };
 
 			if(b_indivs_are_different(v_indivs))
 			{
+				Indiv *p_ind_new = new Indiv(v_tmp);
+
 				for(int gene_offset = MIN_GENE_OFFSET; gene_offset < p_base->i_genotype_size; ++gene_offset)
 				{
 					const double D_BACKUP_GENE = p_ind_new->pd_tab[gene_offset];
@@ -62,40 +60,34 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 							p_ind_new->pd_tab[gene_offset] = 0.0;
 					}
 					else
-						p_ind_new->pd_tab[gene_offset] = (*p_ind)->pd_tab[gene_offset];
+						p_ind_new->pd_tab[gene_offset] = p_ind->pd_tab[gene_offset];
 
-					v_tmp = p_ind_new->v_vector();
-					if(!pc_problem->bConstraintsSatisfied(v_tmp, i_err_code))
+					if(!b_validate_genotype(*p_ind_new, i_err_code))
 						p_ind_new->pd_tab[gene_offset] = D_BACKUP_GENE;
 				}
 
 				double d_old_fitness, d_new_fitness;
-				v_tmp = (*p_ind)->v_vector();
-
+				
+				v_tmp = p_ind->v_vector();
 				d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 				v_tmp = p_ind_new->v_vector();
 				d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
-				if(i_err_code != 0)
-					++i_error_count;
-
-				if(i_err_code == 0 && d_new_fitness >= d_old_fitness)
+				if(d_new_fitness >= d_old_fitness)
 				{
-					delete *p_ind;
-					*p_ind = p_ind_new;
-					std::cout << i_fit_calls << std::endl;
+					delete p_ind;
+					v_population[i] = p_ind_new;
 				}
 				else
 					delete p_ind_new;
 
 				++i_fit_calls;
 			}
-			else
-				delete p_ind_new;
 			
-			if(b_indivs_are_equal(v_population))
-				i_fit_calls = iFitnessCalls;
+			if(i_fit_calls % FITNESS_INTERVAL == 0)
+				if(b_indivs_are_equal(v_population))
+					i_fit_calls = iFitnessCalls;
 		}
 	}
 
@@ -120,7 +112,6 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		delete *it;
 	v_population.clear();
 
-	std::cout << "ERRORS: " << i_error_count << std::endl;
 	pc_problem->b_apply_solution(v_best_solution, i_err_code);
 	return d_best_quality;
 }
@@ -140,18 +131,19 @@ bool CDiffEvol::b_validate_genotype(Indiv & ind, int iErrCode)
 bool CDiffEvol::b_indivs_are_different(vector<Indiv*> &vIndivs)
 {
 	for(size_t i = 0; i < vIndivs.size(); ++i)
-		for(size_t j = 0; j < vIndivs.size(); ++j)
-			if(i != j)
-				if(vIndivs[i] == vIndivs[j])
-					return false;
+		for(size_t j = i + 1; j < vIndivs.size(); ++j)
+			if(vIndivs[i] == vIndivs[j])
+				return false;
 
 	return true;
 }
 
 bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
 {
-	vector<int> v_base;
+	if(vIndivs.size() < 2)
+		return true;
 
+	vector<int> v_base;
 	for(size_t i = 0; i < vIndivs[0]->i_genotype_size; ++i)
 	{
 		if(i < MIN_GENE_OFFSET)
@@ -160,11 +152,20 @@ bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
 			v_base.push_back(vIndivs[0]->pd_tab[i] * PRECISION);
 	}
 
+	//check random indiv
+	CRandom c_rand;
+	int i_rand_index = c_rand.iRangeClosedLeft(1, vIndivs.size());
+	for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
+		if(v_base[gene_offset] != (int) (vIndivs[i_rand_index]->pd_tab[gene_offset] * PRECISION))
+			return false;
+
+	//if random indiv is equal to base continue
 	for(size_t i = 1; i < vIndivs.size(); ++i)
 	{
-		for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
-			if(v_base[gene_offset] != (int) (vIndivs[i]->pd_tab[gene_offset] * PRECISION))
-				return false;
+		if(i != i_rand_index)
+			for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
+				if(v_base[gene_offset] != (int) (vIndivs[i]->pd_tab[gene_offset] * PRECISION))
+					return false;
 	}
 
 	return true;

@@ -5,8 +5,9 @@
 #define MIN_POPULATION 10
 #define MIN_GENE_OFFSET 4
 #define CROSS_PROBABILITY 0.5
-#define DIFF_WEIGHT 2
-#define PRECISION 10E4
+#define DIFF_WEIGHT 1
+#define PRECISION 1E4
+#define FITNESS_INTERVAL 100
 
 class CDiffEvol
 {
