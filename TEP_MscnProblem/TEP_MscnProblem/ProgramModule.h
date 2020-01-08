@@ -3,6 +3,7 @@
 #include <string>
 #include "CMscnProblem.h"
 #include "CRandomSearch.h"
+#include "CDiffEvol.h"
 
 CMscnProblem v_input_data()
 {
@@ -126,6 +127,29 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	vCreateSolutionFile(cProblem);
 }
 
+void vGenerateSolutionDE(CMscnProblem &cProblem)
+{
+	std::cout << "Enter seed (0 = default seed): ";
+	int i_seed;
+	std::cin >> i_seed;
+
+	std::cout << "Enter max number of fitness evaluations: ";
+	int i_evals;
+	std::cin >> i_evals;
+
+	std::cout << "Enter population size(minimum size = " << MIN_POPULATION << "): ";
+	int i_pop;
+	std::cin >> i_pop;
+
+	CDiffEvol c_evol(cProblem);
+
+	double d_quality = c_evol.dGenerateSolution(i_evals, i_pop, i_seed);
+
+	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
+
+	vCreateSolutionFile(cProblem);
+}
+
 void vLoadProblemFile(CMscnProblem &cProblem)
 {
 	std::cout << "Input file name: ";
@@ -163,6 +187,7 @@ void vShowMenu(CMscnProblem &cProblem)
 	std::cout << "[4] Get quality of solution from file\n";
 	std::cout << "[5] Create random problem file\n";
 	std::cout << "[6] Generate optimal solution using rand-search and save to file\n";
+	std::cout << "[7] Generate optimal solution using diff-evolution and save to file\n";
 	std::cout << "[9] Exit program\n";
 	std::cout << "\nChoose option: ";
 
@@ -193,6 +218,10 @@ void vShowMenu(CMscnProblem &cProblem)
 		break;
 	case 6:
 		vGenerateSolutionRS(cProblem);
+		vShowMenu(cProblem);
+		break;
+	case 7:
+		vGenerateSolutionDE(cProblem);
 		vShowMenu(cProblem);
 		break;
 	case 9:

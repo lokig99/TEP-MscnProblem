@@ -90,6 +90,7 @@ public:
 	CMscnProblem();
 
 	friend class CRandomSearch;
+	friend class CDiffEvol;
 
 	bool bSetDeliverers(int iAmount);
 	bool bSetFactiories(int iAmount);
