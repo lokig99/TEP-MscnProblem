@@ -37,7 +37,7 @@ private:
 	CMscnProblem *pc_problem;
 
 	bool b_validate_genotype(Indiv &ind, int iErrCode);
-	bool b_indivs_are_different(vector<Indiv> &vIndivs);
-	bool b_indivs_are_equal(vector<Indiv> &vIndivs);	
+	bool b_indivs_are_different(vector<Indiv*> &vIndivs);
+	bool b_indivs_are_equal(vector<Indiv*> &vIndivs);	
 };
 

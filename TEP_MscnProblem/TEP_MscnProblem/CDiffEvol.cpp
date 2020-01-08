@@ -20,7 +20,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		c_rand.vSetGlobalSeed(iSeed);
 
 	CRandomSearch c_rs(*pc_problem);
-	vector<Indiv> v_population;
+	vector<Indiv*> v_population;
 	vector<double> v_best_solution;
 	vector<double> v_tmp;
 	double d_best_quality;
@@ -32,49 +32,49 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	for(int i = 0; i < iInitPopulation; ++i)
 	{
 		c_rs.dGenerateSolution(1, v_tmp, rand());
-		v_population.push_back(Indiv(v_tmp));
+		v_population.push_back(new Indiv(v_tmp));
 	}
 
 	while(i_fit_calls < iFitnessCalls)
 	{
 		for(size_t i = 0; i < v_population.size(); ++i)
 		{
-			Indiv ind = v_population[i];
-			Indiv base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv ind_new(v_tmp);
+			Indiv **p_ind = &v_population[i];
+			Indiv *p_base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+			Indiv *p_add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+			Indiv *p_add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+			Indiv *p_ind_new = new Indiv(v_tmp);
 
-			vector<Indiv> v_indivs = { ind, base, add0, add1 };
+			vector<Indiv*> v_indivs = { *p_ind, p_base, p_add0, p_add1 };
 
 			if(b_indivs_are_different(v_indivs))
 			{
-				for(int gene_offset = MIN_GENE_OFFSET; gene_offset < base.i_genotype_size; ++gene_offset)
+				for(int gene_offset = MIN_GENE_OFFSET; gene_offset < p_base->i_genotype_size; ++gene_offset)
 				{
-					const double D_BACKUP_GENE = ind_new.pd_tab[gene_offset];
+					const double D_BACKUP_GENE = p_ind_new->pd_tab[gene_offset];
 
 					if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
 					{
-						ind_new.pd_tab[gene_offset] = base.pd_tab[gene_offset] +
-							DIFF_WEIGHT * (add0.pd_tab[gene_offset] - add1.pd_tab[gene_offset]);
+						p_ind_new->pd_tab[gene_offset] = p_base->pd_tab[gene_offset] +
+							DIFF_WEIGHT * (p_add0->pd_tab[gene_offset] - p_add1->pd_tab[gene_offset]);
 
-						if(ind_new.pd_tab[gene_offset] < 0.0)
-							ind_new.pd_tab[gene_offset] = 0.0;
+						if(p_ind_new->pd_tab[gene_offset] < 0.0)
+							p_ind_new->pd_tab[gene_offset] = 0.0;
 					}
 					else
-						ind_new.pd_tab[gene_offset] = ind.pd_tab[gene_offset];
+						p_ind_new->pd_tab[gene_offset] = (*p_ind)->pd_tab[gene_offset];
 
-					v_tmp = ind_new.v_vector();
+					v_tmp = p_ind_new->v_vector();
 					if(!pc_problem->bConstraintsSatisfied(v_tmp, i_err_code))
-						ind_new.pd_tab[gene_offset] = D_BACKUP_GENE;
+						p_ind_new->pd_tab[gene_offset] = D_BACKUP_GENE;
 				}
 
 				double d_old_fitness, d_new_fitness;
-				v_tmp = ind.v_vector();
+				v_tmp = (*p_ind)->v_vector();
 
 				d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
-				v_tmp = ind_new.v_vector();
+				v_tmp = p_ind_new->v_vector();
 				d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 				if(i_err_code != 0)
@@ -82,23 +82,30 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 
 				if(i_err_code == 0 && d_new_fitness >= d_old_fitness)
 				{
-					v_population[i] = ind_new;
+					delete *p_ind;
+					*p_ind = p_ind_new;
 					std::cout << i_fit_calls << std::endl;
 				}
+				else
+					delete p_ind_new;
+
 				++i_fit_calls;
 			}
-			else if(b_indivs_are_equal(v_population))
+			else
+				delete p_ind_new;
+			
+			if(b_indivs_are_equal(v_population))
 				i_fit_calls = iFitnessCalls;
 		}
 	}
 
 	//find best solution
-	v_best_solution = v_population[0].v_vector();
+	v_best_solution = v_population[0]->v_vector();
 	d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err_code);
 
 	for(size_t i = 1; i < v_population.size(); ++i)
 	{
-		v_tmp = v_population[i].v_vector();
+		v_tmp = v_population[i]->v_vector();
 		double d_quality = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 		if(d_quality > d_best_quality)
@@ -108,6 +115,10 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		}
 	}
 
+	//clear population
+	for(vector<Indiv*>::iterator it = v_population.begin(); it != v_population.end(); ++it)
+		delete *it;
+	v_population.clear();
 
 	std::cout << "ERRORS: " << i_error_count << std::endl;
 	pc_problem->b_apply_solution(v_best_solution, i_err_code);
@@ -126,46 +137,33 @@ bool CDiffEvol::b_validate_genotype(Indiv & ind, int iErrCode)
 	return pc_problem->bConstraintsSatisfied(v_tmp, iErrCode);
 }
 
-bool CDiffEvol::b_indivs_are_different(vector<Indiv> &vIndivs)
+bool CDiffEvol::b_indivs_are_different(vector<Indiv*> &vIndivs)
 {
-	vector<vector<double>> v_tabs;
-
 	for(size_t i = 0; i < vIndivs.size(); ++i)
-	{
-		v_tabs.push_back(vIndivs[i].v_vector());
-	}
-
-	for(size_t i = 0; i < v_tabs.size(); ++i)
-	{
-		for(size_t j = 0; j < v_tabs.size(); ++j)
-		{
+		for(size_t j = 0; j < vIndivs.size(); ++j)
 			if(i != j)
-			{
-				if(v_tabs[i] == v_tabs[j])
+				if(vIndivs[i] == vIndivs[j])
 					return false;
-			}
-		}
-	}
 
 	return true;
 }
 
-bool CDiffEvol::b_indivs_are_equal(vector<Indiv>& vIndivs)
+bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
 {
 	vector<int> v_base;
 
-	for(size_t i = 0; i < vIndivs[0].i_genotype_size; ++i)
+	for(size_t i = 0; i < vIndivs[0]->i_genotype_size; ++i)
 	{
 		if(i < MIN_GENE_OFFSET)
-			v_base.push_back(vIndivs[0].pd_tab[i]);
+			v_base.push_back(vIndivs[0]->pd_tab[i]);
 		else
-			v_base.push_back(vIndivs[0].pd_tab[i] * PRECISION);
+			v_base.push_back(vIndivs[0]->pd_tab[i] * PRECISION);
 	}
 
 	for(size_t i = 1; i < vIndivs.size(); ++i)
 	{
-		for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0].i_genotype_size; ++gene_offset)
-			if(v_base[gene_offset] != (int) (vIndivs[i].pd_tab[gene_offset] * PRECISION))
+		for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
+			if(v_base[gene_offset] != (int) (vIndivs[i]->pd_tab[gene_offset] * PRECISION))
 				return false;
 	}
 
