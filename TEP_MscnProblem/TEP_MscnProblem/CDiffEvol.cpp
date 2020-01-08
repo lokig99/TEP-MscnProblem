@@ -70,7 +70,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 				}
 
 				double d_old_fitness, d_new_fitness;
-				v_tmp = ind.v_vector;
+				v_tmp = ind.v_vector();
 
 				d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
