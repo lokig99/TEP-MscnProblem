@@ -51,7 +51,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 			{
 				for(int gene_offset = MIN_GENE_OFFSET; gene_offset < base.i_genotype_size; ++gene_offset)
 				{
-					double d_backup = ind_new.pd_tab[gene_offset];
+					const double D_BACKUP_GENE = ind_new.pd_tab[gene_offset];
 
 					if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
 					{
@@ -62,21 +62,19 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 							ind_new.pd_tab[gene_offset] = 0.0;
 					}
 					else
-					{
 						ind_new.pd_tab[gene_offset] = ind.pd_tab[gene_offset];
-					}
 
-					v_tmp = v_get_vector(ind_new);
+					v_tmp = ind_new.v_vector();
 					if(!pc_problem->bConstraintsSatisfied(v_tmp, i_err_code))
-						ind_new.pd_tab[gene_offset] = d_backup;
+						ind_new.pd_tab[gene_offset] = D_BACKUP_GENE;
 				}
 
 				double d_old_fitness, d_new_fitness;
-				v_tmp = v_get_vector(ind);
+				v_tmp = ind.v_vector;
 
 				d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
-				v_tmp = v_get_vector(ind_new);
+				v_tmp = ind_new.v_vector();
 				d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 				if(i_err_code != 0)
@@ -89,18 +87,18 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 				}
 				++i_fit_calls;
 			}
-			else if(b_population_is_equal(v_population))
+			else if(b_indivs_are_equal(v_population))
 				i_fit_calls = iFitnessCalls;
 		}
 	}
 
 	//find best solution
-	v_best_solution = v_get_vector(v_population[0]);
+	v_best_solution = v_population[0].v_vector();
 	d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err_code);
 
 	for(size_t i = 1; i < v_population.size(); ++i)
 	{
-		v_tmp = v_get_vector(v_population[i]);
+		v_tmp = v_population[i].v_vector();
 		double d_quality = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 		if(d_quality > d_best_quality)
@@ -124,57 +122,8 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, int 
 
 bool CDiffEvol::b_validate_genotype(Indiv & ind, int iErrCode)
 {
-	vector<double> v_tmp = v_get_vector(ind);
+	vector<double> v_tmp = ind.v_vector();
 	return pc_problem->bConstraintsSatisfied(v_tmp, iErrCode);
-}
-
-bool CDiffEvol::b_fix_genotype(Indiv & ind)
-{
-	int i_err = 0;
-	int i_dummy;
-
-	if(b_validate_genotype(ind, i_err))
-		return true;
-
-	vector<double> v_tmp = v_get_vector(ind);
-	pc_problem->b_apply_solution(v_tmp, i_dummy);
-
-	if(i_err == INVALID_PROD_CAP_SD)
-	{
-		for(size_t i = 0; i < pc_problem->v_amount_xd.size(); ++i)
-		{
-			double d_products = 0.0;
-
-			for(size_t j = 0; j < pc_problem->v_amount_xd[0].size(); ++j)
-			{
-				d_products += pc_problem->v_amount_xd[i][j];
-			}
-
-		}
-
-	}
-	else if(i_err == INVALID_PROD_CAP_SF)
-	{
-
-	}
-	else if(i_err == INVALID_AMOUNT_SM)
-	{
-
-	}
-	else if(i_err == INVALID_AMOUNT_SS)
-	{
-
-	}
-	else if(i_err == INVALID_AMOUNT_XD_XF)
-	{
-
-	}
-	else if(i_err == INVALID_AMOUNT_XF_XM)
-	{
-
-	}
-
-	return b_fix_genotype(ind);
 }
 
 bool CDiffEvol::b_indivs_are_different(vector<Indiv> &vIndivs)
@@ -183,7 +132,7 @@ bool CDiffEvol::b_indivs_are_different(vector<Indiv> &vIndivs)
 
 	for(size_t i = 0; i < vIndivs.size(); ++i)
 	{
-		v_tabs.push_back(v_get_vector(vIndivs[i]));
+		v_tabs.push_back(vIndivs[i].v_vector());
 	}
 
 	for(size_t i = 0; i < v_tabs.size(); ++i)
@@ -201,7 +150,7 @@ bool CDiffEvol::b_indivs_are_different(vector<Indiv> &vIndivs)
 	return true;
 }
 
-bool CDiffEvol::b_population_is_equal(vector<Indiv>& vIndivs)
+bool CDiffEvol::b_indivs_are_equal(vector<Indiv>& vIndivs)
 {
 	vector<int> v_base;
 
@@ -223,15 +172,8 @@ bool CDiffEvol::b_population_is_equal(vector<Indiv>& vIndivs)
 	return true;
 }
 
-vector<double> CDiffEvol::v_get_vector(Indiv & ind)
-{
-	vector<double> v_res;
 
-	for(int i = 0; i < ind.i_genotype_size; ++i)
-		v_res.push_back(ind.pd_tab[i]);
-
-	return v_res;
-}
+//////////////////////// Indiv ///////////////////////////
 
 CDiffEvol::Indiv::Indiv(int iGenotypeSize)
 {
@@ -250,7 +192,7 @@ CDiffEvol::Indiv::Indiv(vector<double> &vSolution)
 
 CDiffEvol::Indiv::Indiv(const Indiv & other)
 {
-	*this = other;
+	v_copy(other);
 }
 
 CDiffEvol::Indiv::~Indiv()
@@ -259,21 +201,29 @@ CDiffEvol::Indiv::~Indiv()
 		delete[] pd_tab;
 }
 
-double * CDiffEvol::Indiv::operator[](int iOffset)
+void CDiffEvol::Indiv::operator=(const Indiv & other)
 {
-	if(iOffset >= i_genotype_size)
-		return NULL;
-
-	return (pd_tab + iOffset);
+	this->~Indiv();
+	v_copy(other);
 }
 
-void CDiffEvol::Indiv::operator=(const Indiv & other)
+void CDiffEvol::Indiv::v_copy(const Indiv & other)
 {
 	i_genotype_size = other.i_genotype_size;
 	pd_tab = new double[i_genotype_size];
 
 	for(int i = 0; i < i_genotype_size; ++i)
 		pd_tab[i] = other.pd_tab[i];
+}
+
+vector<double> CDiffEvol::Indiv::v_vector()
+{
+	vector<double> v_res;
+
+	for(int i = 0; i < i_genotype_size; ++i)
+		v_res.push_back(pd_tab[i]);
+
+	return v_res;
 }
 
 

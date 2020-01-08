@@ -26,8 +26,9 @@ private:
 		Indiv(vector<double> &vSolution);
 		Indiv(const Indiv &other);
 		~Indiv();
-		double* operator[](int iOffset);
 		void operator=(const Indiv &other);
+		void v_copy(const Indiv &other);
+		vector<double> v_vector();
 
 		double *pd_tab;
 		int i_genotype_size;
@@ -36,9 +37,7 @@ private:
 	CMscnProblem *pc_problem;
 
 	bool b_validate_genotype(Indiv &ind, int iErrCode);
-	bool b_fix_genotype(Indiv &ind);
 	bool b_indivs_are_different(vector<Indiv> &vIndivs);
-	bool b_population_is_equal(vector<Indiv> &vIndivs);
-	vector<double> v_get_vector(Indiv &ind);
+	bool b_indivs_are_equal(vector<Indiv> &vIndivs);	
 };
 
