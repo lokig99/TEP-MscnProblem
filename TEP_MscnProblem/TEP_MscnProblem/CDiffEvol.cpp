@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "CDiffEvol.h"
+#include <iostream>
 
 
 double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double>& vSolution)
@@ -25,6 +26,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	double d_best_quality;
 	int i_err_code = 0;
 	int i_fit_calls = 0;
+	int i_iteration_counter = 0;
 
 	//initialize population
 	for(int i = 0; i < iInitPopulation; ++i)
@@ -33,61 +35,66 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		v_population.push_back(new Indiv(v_tmp));
 	}
 
-	while(i_fit_calls < iFitnessCalls)
+	while(i_fit_calls < iFitnessCalls && i_iteration_counter < MAX_ITERATION_LIMIT)
 	{
+		++i_iteration_counter;
+		std::cout << i_iteration_counter << "\t" << i_fit_calls << std::endl;
+
+		if(i_iteration_counter % ITERATION_INTERVAL == 0)
+			if(b_indivs_are_equal(v_population))
+				i_fit_calls = iFitnessCalls;
+
 		for(size_t i = 0; i < v_population.size(); ++i)
 		{
-			Indiv *p_ind = v_population[i];
-			Indiv *p_base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv *p_add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			Indiv *p_add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-			vector<Indiv*> v_indivs = { p_ind, p_base, p_add0, p_add1 };
-
-			if(b_indivs_are_different(v_indivs))
+			if(i_fit_calls < iFitnessCalls) 
 			{
-				Indiv *p_ind_new = new Indiv(v_tmp);
+				Indiv *p_ind = v_population[i];
+				Indiv *p_base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+				Indiv *p_add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+				Indiv *p_add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+				vector<Indiv*> v_indivs = { p_ind, p_base, p_add0, p_add1 };
 
-				for(int gene_offset = MIN_GENE_OFFSET; gene_offset < p_base->i_genotype_size; ++gene_offset)
+				if(b_indivs_are_different(v_indivs))
 				{
-					const double D_BACKUP_GENE = p_ind_new->pd_tab[gene_offset];
+					Indiv *p_ind_new = new Indiv(v_tmp);
 
-					if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
+					for(int gene_offset = MIN_GENE_OFFSET; gene_offset < p_base->i_genotype_size; ++gene_offset)
 					{
-						p_ind_new->pd_tab[gene_offset] = p_base->pd_tab[gene_offset] +
-							DIFF_WEIGHT * (p_add0->pd_tab[gene_offset] - p_add1->pd_tab[gene_offset]);
+						const double D_BACKUP_GENE = p_ind_new->pd_tab[gene_offset];
 
-						if(p_ind_new->pd_tab[gene_offset] < 0.0)
-							p_ind_new->pd_tab[gene_offset] = 0.0;
+						if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
+						{
+							p_ind_new->pd_tab[gene_offset] = p_base->pd_tab[gene_offset] +
+								DIFF_WEIGHT * (p_add0->pd_tab[gene_offset] - p_add1->pd_tab[gene_offset]);
+
+							if(p_ind_new->pd_tab[gene_offset] < 0.0)
+								p_ind_new->pd_tab[gene_offset] = 0.0;
+						}
+						else
+							p_ind_new->pd_tab[gene_offset] = p_ind->pd_tab[gene_offset];
+
+						if(!b_validate_genotype(*p_ind_new, i_err_code))
+							p_ind_new->pd_tab[gene_offset] = D_BACKUP_GENE;
+					}
+
+					double d_old_fitness, d_new_fitness;
+
+					v_tmp = p_ind->v_vector();
+					d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
+
+					v_tmp = p_ind_new->v_vector();
+					d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
+
+					++i_fit_calls;
+					if(d_new_fitness >= d_old_fitness)
+					{
+						delete p_ind;
+						v_population[i] = p_ind_new;
 					}
 					else
-						p_ind_new->pd_tab[gene_offset] = p_ind->pd_tab[gene_offset];
-
-					if(!b_validate_genotype(*p_ind_new, i_err_code))
-						p_ind_new->pd_tab[gene_offset] = D_BACKUP_GENE;
+						delete p_ind_new;
 				}
-
-				double d_old_fitness, d_new_fitness;
-				
-				v_tmp = p_ind->v_vector();
-				d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
-
-				v_tmp = p_ind_new->v_vector();
-				d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
-
-				if(d_new_fitness >= d_old_fitness)
-				{
-					delete p_ind;
-					v_population[i] = p_ind_new;
-				}
-				else
-					delete p_ind_new;
-
-				++i_fit_calls;
-			}
-			
-			if(i_fit_calls % FITNESS_INTERVAL == 0)
-				if(b_indivs_are_equal(v_population))
-					i_fit_calls = iFitnessCalls;
+			}		
 		}
 	}
 

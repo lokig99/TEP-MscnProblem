@@ -11,8 +11,6 @@ int main()
 {
 	CMscnProblem c_problem;
 	vShowMenu(c_problem);
-
-	return 0;
 }
 
 //Odpowiedzi do listy 10

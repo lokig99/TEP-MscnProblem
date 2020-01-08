@@ -42,7 +42,7 @@ double CRandom::dRange(double dMin, double dMax)
 	if(dMin > dMax)
 		return -1.0;
 
-	return dMin + d_random() * (dMax - dMin);
+	return dMin + d_random() * (dMax - dMin);;
 }
 
 double CRandom::d_random()
