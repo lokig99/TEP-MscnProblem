@@ -13,6 +13,20 @@ int main()
 	vShowMenu(c_problem);
 }
 
+//Odpowiedzi do listy 11
+
+//Zastanów się, który z obiektów powinien zliczać liczbę wywołań oceny przystosowania
+//i umieść kod w odpowiednim miejscu.
+
+/*Moim zdaniem najsensowniejszym rozwiązaniem jest pozostawienie zliczania liczby oceny przystosowania
+obiektowi optymalizatora a dokładnie jego głownej metodzie optymalizującej. Licznik wystarczy zrobić w postaci
+zwykłego integera i inkrementować go po każdym wywołaniu odpowiedniej funkcji
+
+Trzymanie licznika w innym miejscu jest niepotrzebne (szczególnie jako pole obiektu), ponieważ jest to wartość tymczasowa
+i kompletnie niepotrzebna po wykonaniu głównej metody
+*/
+
+
 //Odpowiedzi do listy 10
 
 //Ustal relację, którą
@@ -52,9 +66,8 @@ to mało praktycznie przy większych instancjach)
 
 PRZYKŁADOWE PLIKI W ROZWIĄZANIU
 
-example_problem.txt
-example_solution.txt
-ex_invalid_sol.txt
+ex_problem.txt
+ex_solution.txt
 
 powyższe pliki są kompatybilne ze sobą
 */

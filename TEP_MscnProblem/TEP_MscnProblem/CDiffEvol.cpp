@@ -40,7 +40,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	while(i_fit_calls < iFitnessCalls)
 	{
 		++i_iteration_counter;
-		std::cout << "generation= " <<i_iteration_counter << "\tfitness evaluations= " << i_fit_calls << std::endl;
+		//std::cout << "generation= " <<i_iteration_counter << "\tfitness evaluations= " << i_fit_calls << std::endl;
 
 		if(i_iteration_counter % ITERATION_INTERVAL == 0)
 			if(b_indivs_are_equal(v_population))
@@ -88,8 +88,6 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 
 					v_tmp = p_ind_new->v_vector();
 					d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
-					
-					++i_fit_calls;
 
 					if(d_new_fitness >= d_old_fitness)
 					{
@@ -99,6 +97,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 					else
 						delete p_ind_new;
 
+					++i_fit_calls;
 					v_solution_quality_history[i].push_back(std::max(d_new_fitness, d_old_fitness));
 				}
 			}
@@ -148,13 +147,15 @@ bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
 bool CDiffEvol::b_save_to_csv_file(vector<vector<double>>& vSolutionQualityHistory)
 {
 	FILE *pf_file = fopen(CSV_FILE_NAME ".csv", "r");
-	const int MAX_FOPEN_TRIES = 10;
+	const int MAX_FOPEN_TRIES = 255;
 	int i_tries = 0;
 	string s_filename = CSV_FILE_NAME;
 
 	while(pf_file != NULL && i_tries < MAX_FOPEN_TRIES)
 	{
+		++i_tries;
 		s_filename += "-";
+		fclose(pf_file);
 		pf_file = fopen((s_filename + ".csv").c_str(), "r");
 	}
 

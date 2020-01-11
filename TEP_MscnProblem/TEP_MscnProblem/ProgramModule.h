@@ -120,8 +120,13 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 
 	CRandomSearch c_search(cProblem);
 
+	clock_t timer;
+	timer = clock();
+
 	double d_quality = c_search.dGenerateSolution(i_input, i_seed);
 
+	timer = clock() - timer;
+	printf("\ncalculation time: %f seconds\n", (float) timer / CLOCKS_PER_SEC);
 	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
 
 	vCreateSolutionFile(cProblem);
@@ -143,8 +148,14 @@ void vGenerateSolutionDE(CMscnProblem &cProblem)
 
 	CDiffEvol c_evol(cProblem);
 
+	clock_t timer;
+	timer = clock();
+
 	double d_quality = c_evol.dGenerateSolution(i_evals, i_pop, i_seed);
 
+	timer = clock() - timer;
+
+	printf("\ncalculation time: %f seconds\n", (float)timer / CLOCKS_PER_SEC);
 	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
 
 	if(d_quality >= 0.0)
