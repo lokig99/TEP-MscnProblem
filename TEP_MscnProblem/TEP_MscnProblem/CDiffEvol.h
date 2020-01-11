@@ -6,9 +6,11 @@
 #define MIN_GENE_OFFSET 4
 #define CROSS_PROBABILITY 0.75
 #define DIFF_WEIGHT 1
-#define PRECISION 1E4
-#define ITERATION_INTERVAL 50
-#define MAX_ITERATION_LIMIT 1E42
+#define PRECISION 1E-2
+#define ITERATION_INTERVAL 10
+#define ROUND_TO_ZERO_BELOW 1E-4
+#define EXAMINED_INDIV_NUMBER 3
+#define CSV_FILE_NAME "DiffEvol-Recent"
 
 class CDiffEvol
 {
@@ -41,5 +43,7 @@ private:
 	bool b_validate_genotype(Indiv &ind, int iErrCode);
 	bool b_indivs_are_different(vector<Indiv*> &vIndivs);
 	bool b_indivs_are_equal(vector<Indiv*> &vIndivs);	
+	bool b_save_to_csv_file(vector<vector<double>> &vSolutionQualityHistory);
+	vector<double> v_get_best_solution(vector<Indiv*> &vIndivs, double &dQualityOutput);
 };
 

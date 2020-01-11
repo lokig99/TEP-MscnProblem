@@ -3,6 +3,7 @@
 #include "CRandom.h"
 
 #define ROUND_TO_ZERO_BELOW 0.1
+#define CSV_FILE_NAME "RS-Data.csv"
 
 class CRandomSearch
 {
@@ -16,10 +17,10 @@ public:
 
 private:
 	CMscnProblem *pc_problem;
-
 	double d_resources_amount(vector<vector<double>> &vMatrix, int iPosition);
 	bool b_fill_safe_xd();
 	bool b_fill_safe_xf();
 	bool b_fill_safe_xm();
+	bool b_save_to_csv_file(vector<double> &vSolutionQualityHistory);
 };
 

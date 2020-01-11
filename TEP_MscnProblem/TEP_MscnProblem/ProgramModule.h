@@ -147,7 +147,8 @@ void vGenerateSolutionDE(CMscnProblem &cProblem)
 
 	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
 
-	vCreateSolutionFile(cProblem);
+	if(d_quality >= 0.0)
+		vCreateSolutionFile(cProblem);
 }
 
 void vLoadProblemFile(CMscnProblem &cProblem)

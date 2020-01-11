@@ -2,6 +2,12 @@
 #include <cstdlib>
 #include <algorithm>
 #include <ctime>
+#include <vector>
+#include <iostream>
+
+#define INT_INFINITY std::numeric_limits<int>::max()
+
+using std::vector;
 
 class CRandom
 {
@@ -14,6 +20,7 @@ public:
 	double dRange(double dMin, double dMax);
 	void vResetGlobalSeed() { srand(time(NULL)); }
 	void vSetGlobalSeed(int iSeed) { srand(iSeed); }
+	vector<int> vGetVariedVector(int iMin, int iMax);
 
 private:
 	double d_random();

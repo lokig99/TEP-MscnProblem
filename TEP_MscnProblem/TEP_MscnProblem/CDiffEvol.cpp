@@ -20,6 +20,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		c_rand.vSetGlobalSeed(iSeed);
 
 	CRandomSearch c_rs(*pc_problem);
+	vector<vector<double>> v_solution_quality_history;
 	vector<Indiv*> v_population;
 	vector<double> v_best_solution;
 	vector<double> v_tmp;
@@ -33,25 +34,29 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	{
 		c_rs.dGenerateSolution(1, v_tmp, rand());
 		v_population.push_back(new Indiv(v_tmp));
+		v_solution_quality_history.push_back(vector<double>());
 	}
 
-	while(i_fit_calls < iFitnessCalls && i_iteration_counter < MAX_ITERATION_LIMIT)
+	while(i_fit_calls < iFitnessCalls)
 	{
 		++i_iteration_counter;
-		std::cout << i_iteration_counter << "\t" << i_fit_calls << std::endl;
+		std::cout << "generation= " <<i_iteration_counter << "\tfitness evaluations= " << i_fit_calls << std::endl;
 
 		if(i_iteration_counter % ITERATION_INTERVAL == 0)
 			if(b_indivs_are_equal(v_population))
 				i_fit_calls = iFitnessCalls;
-
+		 
 		for(size_t i = 0; i < v_population.size(); ++i)
 		{
 			if(i_fit_calls < iFitnessCalls) 
 			{
+				vector<int> v_rand_positions = c_rand.vGetVariedVector(0, v_population.size() - 1);
+				vector<int>::iterator position = v_rand_positions.begin();
+
 				Indiv *p_ind = v_population[i];
-				Indiv *p_base = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-				Indiv *p_add0 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
-				Indiv *p_add1 = v_population[c_rand.iRangeClosedLeft(0, v_population.size())];
+				Indiv *p_base = v_population[*position != i ? *position : *(++position)];
+				Indiv *p_add0 = v_population[*(++position) != i ? *position : *(++position)];
+				Indiv *p_add1 = v_population[*(++position) != i ? *position : *(++position)];
 				vector<Indiv*> v_indivs = { p_ind, p_base, p_add0, p_add1 };
 
 				if(b_indivs_are_different(v_indivs))
@@ -67,7 +72,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 							p_ind_new->pd_tab[gene_offset] = p_base->pd_tab[gene_offset] +
 								DIFF_WEIGHT * (p_add0->pd_tab[gene_offset] - p_add1->pd_tab[gene_offset]);
 
-							if(p_ind_new->pd_tab[gene_offset] < 0.0)
+							if(p_ind_new->pd_tab[gene_offset] < ROUND_TO_ZERO_BELOW)
 								p_ind_new->pd_tab[gene_offset] = 0.0;
 						}
 						else
@@ -78,14 +83,14 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 					}
 
 					double d_old_fitness, d_new_fitness;
-
 					v_tmp = p_ind->v_vector();
 					d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 					v_tmp = p_ind_new->v_vector();
 					d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
-
+					
 					++i_fit_calls;
+
 					if(d_new_fitness >= d_old_fitness)
 					{
 						delete p_ind;
@@ -93,25 +98,13 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 					}
 					else
 						delete p_ind_new;
+
+					v_solution_quality_history[i].push_back(std::max(d_new_fitness, d_old_fitness));
 				}
-			}		
+			}
 		}
-	}
 
-	//find best solution
-	v_best_solution = v_population[0]->v_vector();
-	d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err_code);
-
-	for(size_t i = 1; i < v_population.size(); ++i)
-	{
-		v_tmp = v_population[i]->v_vector();
-		double d_quality = pc_problem->dGetQuality(v_tmp, i_err_code);
-
-		if(d_quality > d_best_quality)
-		{
-			v_best_solution = v_tmp;
-			d_best_quality = d_quality;
-		}
+		v_best_solution = v_get_best_solution(v_population, d_best_quality);
 	}
 
 	//clear population
@@ -120,6 +113,7 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	v_population.clear();
 
 	pc_problem->b_apply_solution(v_best_solution, i_err_code);
+	b_save_to_csv_file(v_solution_quality_history);
 	return d_best_quality;
 }
 
@@ -137,45 +131,73 @@ bool CDiffEvol::b_validate_genotype(Indiv & ind, int iErrCode)
 
 bool CDiffEvol::b_indivs_are_different(vector<Indiv*> &vIndivs)
 {
-	for(size_t i = 0; i < vIndivs.size(); ++i)
-		for(size_t j = i + 1; j < vIndivs.size(); ++j)
-			if(vIndivs[i] == vIndivs[j])
+	return !b_indivs_are_equal(vIndivs);
+}
+
+bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
+{
+	//if random indiv is equal to base continue
+	for(size_t i = 1; i < vIndivs.size(); ++i)
+		for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
+			if(std::abs(vIndivs[0]->pd_tab[gene_offset] - vIndivs[i]->pd_tab[gene_offset]) > PRECISION)
 				return false;
 
 	return true;
 }
 
-bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
+bool CDiffEvol::b_save_to_csv_file(vector<vector<double>>& vSolutionQualityHistory)
 {
-	if(vIndivs.size() < 2)
-		return true;
+	FILE *pf_file = fopen(CSV_FILE_NAME ".csv", "r");
+	const int MAX_FOPEN_TRIES = 10;
+	int i_tries = 0;
+	string s_filename = CSV_FILE_NAME;
 
-	vector<int> v_base;
-	for(size_t i = 0; i < vIndivs[0]->i_genotype_size; ++i)
+	while(pf_file != NULL && i_tries < MAX_FOPEN_TRIES)
 	{
-		if(i < MIN_GENE_OFFSET)
-			v_base.push_back(vIndivs[0]->pd_tab[i]);
-		else
-			v_base.push_back(vIndivs[0]->pd_tab[i] * PRECISION);
+		s_filename += "-";
+		pf_file = fopen((s_filename + ".csv").c_str(), "r");
 	}
 
-	//check random indiv
-	CRandom c_rand;
-	int i_rand_index = c_rand.iRangeClosedLeft(1, vIndivs.size());
-	for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
-		if(v_base[gene_offset] != (int) (vIndivs[i_rand_index]->pd_tab[gene_offset] * PRECISION))
-			return false;
+	pf_file = fopen((s_filename + ".csv").c_str(), "w");
+		
+	if(pf_file != NULL)
+	{
+		for(size_t i = 0; i < vSolutionQualityHistory.size(); ++i)
+		{
+			for(size_t j = 0; j < vSolutionQualityHistory[i].size(); ++j)
+				if(!fprintf(pf_file, "%f;", vSolutionQualityHistory[i][j]))
+					return false;
+			if(!fprintf(pf_file, "\n"))
+				return false;
+		}
+			
+		fclose(pf_file);
+		return true;
+	}
 
-	//if random indiv is equal to base continue
+	return false;
+}
+
+vector<double> CDiffEvol::v_get_best_solution(vector<Indiv*>& vIndivs, double &dQualityOutput)
+{
+	int i_err;
+	vector<double> v_best_solution = vIndivs[0]->v_vector();
+	double d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err);
+
 	for(size_t i = 1; i < vIndivs.size(); ++i)
 	{
-		if(i != i_rand_index)
-			for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
-				if(v_base[gene_offset] != (int) (vIndivs[i]->pd_tab[gene_offset] * PRECISION))
-					return false;
+		vector<double> v_tmp = vIndivs[i]->v_vector();
+		double d_quality = pc_problem->dGetQuality(v_tmp, i_err);
+
+		if(d_quality > d_best_quality)
+		{
+			v_best_solution = v_tmp;
+			d_best_quality = d_quality;
+		}
 	}
 
-	return true;
+	dQualityOutput = d_best_quality;
+	return v_best_solution;
 }
 
 

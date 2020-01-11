@@ -18,6 +18,7 @@ double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSoluti
 		c_rand.vSetGlobalSeed(iSeed);
 
 	vector<double> v_best_solution;
+	vector<double> v_solution_quality_history;
 	double d_best_quality;
 	int i_err_code;
 
@@ -57,24 +58,24 @@ double CRandomSearch::dGenerateSolution(int iIterations, vector<double> &vSoluti
 			v_solution = pc_problem->vGetSolutionVector();
 		}
 
+		double d_quality = pc_problem->dGetQuality(v_solution, i_err_code);
+		v_solution_quality_history.push_back(d_quality);
+
 		if(v_best_solution.empty())
 		{
 			v_best_solution = v_solution;
-			d_best_quality = pc_problem->dGetQuality(v_solution, i_err_code);
+			d_best_quality = d_quality;
 		}
-		else
+		else if(d_quality > d_best_quality)
 		{
-			double d_quality = pc_problem->dGetQuality(v_solution, i_err_code);
-			if(d_quality > d_best_quality)
-			{
-				v_best_solution = v_solution;
-				d_best_quality = d_quality;
-			}
+			v_best_solution = v_solution;
+			d_best_quality = d_quality;
 		}
 	}
 
 	pc_problem->b_apply_solution(v_best_solution, i_err_code);
 	vSolution = v_best_solution;
+	b_save_to_csv_file(v_solution_quality_history);
 	return d_best_quality;
 }
 
@@ -186,5 +187,22 @@ bool CRandomSearch::b_fill_safe_xm()
 	}
 
 	return true;
+}
+
+bool CRandomSearch::b_save_to_csv_file(vector<double> &vSolutionQualityHistory)
+{
+	FILE *pf_file = fopen(CSV_FILE_NAME, "w");
+
+	if(pf_file != NULL)
+	{
+		for(size_t i = 0; i < vSolutionQualityHistory.size(); ++i)
+			if(!fprintf(pf_file, "%f\n", vSolutionQualityHistory[i]))
+				return false;
+		
+		fclose(pf_file);
+		return true;
+	}
+
+	return false;
 }
 

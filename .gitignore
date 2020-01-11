@@ -262,3 +262,4 @@ __pycache__/
 
 #MSCN_PROBLEM solution and problem files
 TEP_MscnProblem/TEP_MscnProblem/*.txt
+TEP_MscnProblem/TEP_MscnProblem/*.csv
