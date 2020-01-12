@@ -40,12 +40,8 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	while(i_fit_calls < iFitnessCalls)
 	{
 		++i_iteration_counter;
-		//std::cout << "generation= " <<i_iteration_counter << "\tfitness evaluations= " << i_fit_calls << std::endl;
+		std::cout << "generation= " <<i_iteration_counter << "\tfitness evaluations= " << i_fit_calls << std::endl;
 
-		if(i_iteration_counter % ITERATION_INTERVAL == 0)
-			if(b_indivs_are_equal(v_population))
-				i_fit_calls = iFitnessCalls;
-		 
 		for(size_t i = 0; i < v_population.size(); ++i)
 		{
 			if(i_fit_calls < iFitnessCalls) 
@@ -103,8 +99,12 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 			}
 		}
 
-		v_best_solution = v_get_best_solution(v_population, d_best_quality);
+		if(i_iteration_counter % ITERATION_INTERVAL == 0)
+			if(b_indivs_are_equal(v_population))
+				i_fit_calls = iFitnessCalls;	
 	}
+
+	v_best_solution = v_get_best_solution(v_population, d_best_quality);
 
 	//clear population
 	for(vector<Indiv*>::iterator it = v_population.begin(); it != v_population.end(); ++it)
@@ -135,7 +135,6 @@ bool CDiffEvol::b_indivs_are_different(vector<Indiv*> &vIndivs)
 
 bool CDiffEvol::b_indivs_are_equal(vector<Indiv*>& vIndivs)
 {
-	//if random indiv is equal to base continue
 	for(size_t i = 1; i < vIndivs.size(); ++i)
 		for(int gene_offset = MIN_GENE_OFFSET; gene_offset < vIndivs[0]->i_genotype_size; ++gene_offset)
 			if(std::abs(vIndivs[0]->pd_tab[gene_offset] - vIndivs[i]->pd_tab[gene_offset]) > PRECISION)
