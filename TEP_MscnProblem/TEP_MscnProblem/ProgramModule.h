@@ -3,9 +3,9 @@
 #include <string>
 #include "CMscnProblem.h"
 #include "CRandomSearch.h"
-#include "CDiffEvol.h"
+//#include "CDiffEvol.h"
 
-CMscnProblem v_input_data()
+CMscnProblem c_input_data()
 {
 	CMscnProblem c_problem;
 	int i_input = -1;
@@ -17,7 +17,7 @@ CMscnProblem v_input_data()
 	}
 
 	i_input = -1;
-	while(!c_problem.bSetFactiories(i_input))
+	while(!c_problem.bSetFactories(i_input))
 	{
 		std::cout << "Input Factories amount: ";
 		std::cin >> i_input;
@@ -42,7 +42,7 @@ CMscnProblem v_input_data()
 
 void vCreateEmptyProblemFile()
 {
-	CMscnProblem c_problem = v_input_data();
+	CMscnProblem c_problem = c_input_data();
 
 	std::cout << "Input file name: ";
 	std::string s_file_name;
@@ -55,7 +55,7 @@ void vCreateEmptyProblemFile()
 
 void vCreateRandomProblemFile()
 {
-	CMscnProblem c_problem = v_input_data();
+	CMscnProblem c_problem = c_input_data();
 
 	std::cout << "Enter seed (0 = default seed): ";
 	int i_seed;
@@ -86,23 +86,25 @@ void vCreateRandomProblemFile()
 
 void vCreateEmptySolutionFile()
 {
-	CMscnProblem c_problem = v_input_data();
+	CMscnProblem c_problem = c_input_data();
+	CMscnSolution c_solution;
+	c_solution.vSetProblem(c_problem);
 
 	std::cout << "Input file name: ";
 	std::string s_file_name;
 	std::cin >> s_file_name;
-	if(c_problem.bCreateSolutionFile(s_file_name))
+	if(c_solution.bSaveToFile(s_file_name))
 		std::cout << "\nCreated file: \"" << s_file_name << "\"\n";
 	else
 		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
 }
 
-void vCreateSolutionFile(CMscnProblem &cProblem)
+void vCreateSolutionFile(CMscnSolution &cSolution)
 {
 	std::cout << "\nInput file name: ";
 	std::string s_file_name;
 	std::cin >> s_file_name;
-	if(cProblem.bCreateSolutionFile(s_file_name))
+	if(cSolution.bSaveToFile(s_file_name))
 		std::cout << "\nCreated file: \"" << s_file_name << "\"\n";
 	else
 		std::cout << "\nERROR: Failed to created file: \"" << s_file_name << "\"\n";
@@ -119,20 +121,22 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	std::cin >> i_input;
 
 	CRandomSearch c_search(cProblem);
+	CMscnSolution c_solution;
+	double d_quality;
 
 	clock_t timer;
 	timer = clock();
 
-	double d_quality = c_search.dGenerateSolution(i_input, i_seed);
+	c_solution = c_search.cGenerateSolution(i_input, i_seed, d_quality);
 
 	timer = clock() - timer;
 	printf("\ncalculation time: %f seconds\n", (float) timer / CLOCKS_PER_SEC);
-	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
+	printf("\nQuality of found solution for current problem\n= %f", (float) d_quality);
 
-	vCreateSolutionFile(cProblem);
+	vCreateSolutionFile(c_solution);
 }
 
-void vGenerateSolutionDE(CMscnProblem &cProblem)
+/*void vGenerateSolutionDE(CMscnProblem &cProblem)
 {
 	std::cout << "Enter seed (0 = default seed): ";
 	int i_seed;
@@ -160,7 +164,7 @@ void vGenerateSolutionDE(CMscnProblem &cProblem)
 
 	if(d_quality >= 0.0)
 		vCreateSolutionFile(cProblem);
-}
+}*/
 
 void vLoadProblemFile(CMscnProblem &cProblem)
 {
@@ -180,8 +184,10 @@ void vLoadAndEvalSolutionFile(CMscnProblem &cProblem)
 	std::cin >> s_file_name;
 
 	int i_err;
-	vector<double> v_solution = vLoadSolutionFromFile(s_file_name);
-	double d_quality = cProblem.dGetQuality(v_solution, i_err);
+	CMscnSolution c_solution;
+	c_solution.bLoadFromFile(s_file_name);
+
+	double d_quality = cProblem.dGetQuality(c_solution, i_err);
 
 	if(i_err == 0)
 		std::cout << "\nQuality of solution from file \"" << s_file_name << "\"\n= " << d_quality << std::endl;
@@ -233,7 +239,7 @@ void vShowMenu(CMscnProblem &cProblem)
 		vShowMenu(cProblem);
 		break;
 	case 7:
-		vGenerateSolutionDE(cProblem);
+	//	vGenerateSolutionDE(cProblem);
 		vShowMenu(cProblem);
 		break;
 	case 9:

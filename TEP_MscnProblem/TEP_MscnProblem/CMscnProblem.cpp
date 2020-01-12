@@ -2,45 +2,32 @@
 #include "CMscnProblem.h"
 
 
-CMscnProblem::CMscnProblem()
-{
-	i_deliverers = 0;
-	i_factories = 0;
-	i_magazines = 0;
-	i_shops = 0;
-}
-
 bool CMscnProblem::bSetDeliverers(int iAmount)
 {
 	if(iAmount > 0)
 	{
 		i_deliverers = iAmount;
 		v_update_matrix_size(v_costs_cd, i_deliverers, i_factories);
-		v_update_matrix_size(v_amount_xd, i_deliverers, i_factories);
 		v_update_range_size(v_minmax_xd, i_deliverers, i_factories);
 		v_update_table_size(v_contract_ud, i_deliverers);
 		v_update_table_size(v_production_cap_sd, i_deliverers);
-		
 		return true;
 	}
 
 	return false;
 }
 
-bool CMscnProblem::bSetFactiories(int iAmount)
+bool CMscnProblem::bSetFactories(int iAmount)
 {
 	if(iAmount > 0)
 	{
 		i_factories = iAmount;
 		v_update_matrix_size(v_costs_cd, i_deliverers, i_factories);
 		v_update_matrix_size(v_costs_cf, i_factories, i_magazines);
-		v_update_matrix_size(v_amount_xd, i_deliverers, i_factories);
 		v_update_range_size(v_minmax_xd, i_deliverers, i_factories);
-		v_update_matrix_size(v_amount_xf, i_factories, i_magazines);
 		v_update_range_size(v_minmax_xf, i_factories, i_magazines);
 		v_update_table_size(v_contract_uf, i_factories);
 		v_update_table_size(v_production_cap_sf, i_factories);
-
 		return true;
 	}
 
@@ -54,12 +41,9 @@ bool CMscnProblem::bSetMagazines(int iAmount)
 		i_magazines = iAmount;
 		v_update_matrix_size(v_costs_cf, i_factories, i_magazines);
 		v_update_matrix_size(v_costs_cm, i_magazines, i_shops);
-		v_update_matrix_size(v_amount_xf, i_factories, i_magazines);
 		v_update_range_size(v_minmax_xf, i_factories, i_magazines);
-		v_update_matrix_size(v_amount_xm, i_magazines, i_shops);
 		v_update_table_size(v_contract_um, i_magazines);
 		v_update_table_size(v_capacity_sm, i_magazines);
-
 		return true;
 	}
 
@@ -72,11 +56,9 @@ bool CMscnProblem::bSetShops(int iAmount)
 	{
 		i_shops = iAmount;
 		v_update_matrix_size(v_costs_cm, i_magazines, i_shops);
-		v_update_matrix_size(v_amount_xm, i_magazines, i_shops);
 		v_update_range_size(v_minmax_xm, i_magazines, i_shops);
 		v_update_table_size(v_income_p, i_shops);
 		v_update_table_size(v_need_ss, i_shops);
-
 		return true;
 	}
 
@@ -183,17 +165,17 @@ vector<double> CMscnProblem::vGetRangeXM(int iRow, int iColumn)
 	return v_get_range(v_minmax_xm, iRow, iColumn);
 }
 
-double CMscnProblem::dGetQuality(vector<double>& vSolution, int & iErrorCode)
+double CMscnProblem::dGetQuality(CMscnSolution &cSolution, int & iErrorCode)
 {
-	if(!bConstraintsSatisfied(vSolution, iErrorCode))
+	if(!bConstraintsSatisfied(cSolution, iErrorCode))
 		return NAN;
 	
 	return d_calculate_quality();
 }
 
-bool CMscnProblem::bConstraintsSatisfied(vector<double>& vSolution, int & iErrorCode)
+bool CMscnProblem::bConstraintsSatisfied(CMscnSolution &cSolution, int & iErrorCode)
 {
-	if(!b_apply_solution(vSolution, iErrorCode))
+	if(!b_apply_solution(cSolution, iErrorCode))
 		return false;
 
 	if(!b_validate_amount_sm())
@@ -335,7 +317,7 @@ bool CMscnProblem::bLoadFromFile(string sFileName)
 			return false;
 
 		fscanf(pf_file, DEF_F INSTANCE_WRITE_FORMAT, &i_input);
-		if(!bSetFactiories(i_input))
+		if(!bSetFactories(i_input))
 			return false;
 
 		fscanf(pf_file, DEF_M INSTANCE_WRITE_FORMAT, &i_input);
@@ -409,86 +391,6 @@ bool CMscnProblem::bLoadFromFile(string sFileName)
 	return false;
 }
 
-bool CMscnProblem::bCreateSolutionFile(string sFileName)
-{
-	FILE *pf_file = fopen((sFileName + FILE_FORMAT).c_str(), "w");
-
-	if(pf_file != NULL)
-	{
-		//write D, F, M, S
-		if(fprintf(pf_file, DEF_D INSTANCE_WRITE_FORMAT, i_deliverers) < 0)
-			return false;
-
-		if(fprintf(pf_file, DEF_F INSTANCE_WRITE_FORMAT, i_factories) < 0)
-			return false;
-
-		if(fprintf(pf_file, DEF_M INSTANCE_WRITE_FORMAT, i_magazines) < 0)
-			return false;
-
-		if(fprintf(pf_file, DEF_S INSTANCE_WRITE_FORMAT, i_shops) < 0)
-			return false;
-
-		if(fprintf(pf_file, "\n") < 0)
-			return false;
-
-		//write xd
-		if(!b_write_matrix(pf_file, DEF_XD, v_amount_xd))
-			return false;
-
-		//write xf
-		if(!b_write_matrix(pf_file, DEF_XF, v_amount_xf))
-			return false;
-
-		//write xm
-		if(!b_write_matrix(pf_file, DEF_XM, v_amount_xm))
-			return false;
-
-		fclose(pf_file);
-		return true;
-	}
-
-	return false;
-}
-
-vector<double> CMscnProblem::vGetSolutionVector()
-{
-	vector<double> v_tmp;
-
-	v_tmp.push_back(i_deliverers);
-	v_tmp.push_back(i_factories);
-	v_tmp.push_back(i_magazines);
-	v_tmp.push_back(i_shops);
-
-	//push xd matrix
-	for(size_t i = 0; i < v_amount_xd.size(); ++i)
-	{
-		for(size_t j = 0; j < v_amount_xd[0].size(); ++j)
-		{
-			v_tmp.push_back(v_amount_xd[i][j]);
-		}
-	}
-
-	//push xf matrix
-	for(size_t i = 0; i < v_amount_xf.size(); ++i)
-	{
-		for(size_t j = 0; j < v_amount_xf[0].size(); ++j)
-		{
-			v_tmp.push_back(v_amount_xf[i][j]);
-		}
-	}
-
-	//push xm matrix
-	for(size_t i = 0; i < v_amount_xm.size(); ++i)
-	{
-		for(size_t j = 0; j < v_amount_xm[0].size(); ++j)
-		{
-			v_tmp.push_back(v_amount_xm[i][j]);
-		}
-	}
-
-	return v_tmp;
-}
-
 void CMscnProblem::vGenerateInstance(int iInstanceSeed)
 {
 	CRandom c_rand;
@@ -512,129 +414,24 @@ void CMscnProblem::vGenerateInstance(int iInstanceSeed)
 	v_random_fill_matrix(v_costs_cm, RAND_CM_MIN, RAND_CM_MAX, c_rand);
 }
 
-void CMscnProblem::v_update_matrix_size(vector<vector<double>>& vMatrix, int iHeight, int iWidth)
-{
-	vector<vector<double>> v_tmp;
-
-	for(size_t i = 0; i < iHeight; ++i)
-	{
-		vector<double> v_row;
-
-		for(size_t j = 0; j < iWidth; ++j)
-		{
-			v_row.push_back(0.0);
-		}
-
-		v_tmp.push_back(v_row);
-	}
-
-	vMatrix = v_tmp;
-}
-
-void CMscnProblem::v_update_table_size(vector<double>& vTable, int iSize)
-{
-	vector<double> v_tmp;
-
-	for(size_t i = 0; i < iSize; ++i)
-	{
-		v_tmp.push_back(0.0);
-	}
-
-	vTable = v_tmp;
-}
-
-void CMscnProblem::v_update_range_size(vector<vector<vector<double>>>& vRange, int iHeight, int iWidth)
-{
-	vector<vector<vector<double>>> v_tmp;
-
-	for(size_t i = 0; i < iHeight; ++i)
-	{
-		vector<vector<double>> v_row;
-
-		for(size_t j = 0; j < iWidth; ++j)
-		{
-			v_row.push_back({0, 0});
-		}
-
-		v_tmp.push_back(v_row);
-	}
-
-	vRange = v_tmp;
-}
-
-bool CMscnProblem::b_set_value(vector<vector<double>>& vMatrix, int iRow, int iColumn, double dValue)
-{
-	if((iRow >= 0 && iRow < vMatrix.size()) && (iColumn >= 0 && iColumn < vMatrix[0].size()) && dValue >= 0.0)
-	{
-		vMatrix[iRow][iColumn] = dValue;
-		return true;
-	}
-
-	return false;
-}
-
-bool CMscnProblem::b_set_value(vector<double>& vTable, int iPosition, double dValue)
-{
-	if(iPosition >= 0 && iPosition < vTable.size() && dValue >= 0.0)
-	{
-		vTable[iPosition] = dValue;
-		return true;
-	}
-
-	return false;
-}
-
-bool CMscnProblem::b_set_range_value(vector<vector<vector<double>>>& vRange, int iRow, int iColumn, double dMin, double dMax)
-{
-	if((iRow >= 0 && iRow < vRange.size()) && (iColumn >= 0 && iColumn < vRange[0].size()) && dMin >= 0.0 && dMax >= 0.0)
-	{
-		vRange[iRow][iColumn] = {dMin, dMax};
-		return true;
-	}
-
-	return false;
-}
-
-bool CMscnProblem::b_set_global_range_value(vector<vector<vector<double>>>& vRange, double dMin, double dMax)
-{
-	for(size_t i = 0; i < vRange.size(); ++i)
-	{
-		for(size_t j = 0; j < vRange[0].size(); ++j)
-		{
-			if(!b_set_range_value(vRange, i, j, dMin, dMax))
-				return false;
-		}
-	}
-
-	return true;
-}
-
-vector<double> CMscnProblem::v_get_range(vector<vector<vector<double>>>& vRange, int iRow, int iColumn)
-{
-	if(iRow >= 0 && iRow < vRange.size() && iColumn >= 0 && iColumn < vRange[0].size())
-		return vRange[iRow][iColumn];
-
-	return vector<double>();
-}
-
 bool CMscnProblem::b_validate_prod_cap_sd()
 {
-	return b_validate_prod_cap(v_amount_xd, v_production_cap_sd);
+	return b_validate_prod_cap(pc_solution->v_amount_xd, v_production_cap_sd);
 }
 
 bool CMscnProblem::b_validate_prod_cap_sf()
 {
-	return b_validate_prod_cap(v_amount_xf, v_production_cap_sf);
+	return b_validate_prod_cap( pc_solution->v_amount_xf, v_production_cap_sf);
 }
 
 bool CMscnProblem::b_validate_amount_sm()
 {
-	return  b_validate_amount(v_amount_xm, v_capacity_sm);
+	return  b_validate_amount(pc_solution->v_amount_xm, v_capacity_sm);
 }
 
 bool CMscnProblem::b_validate_amount_ss()
 {
-	return  b_validate_amount(v_amount_xm, v_need_ss);
+	return  b_validate_amount(pc_solution->v_amount_xm, v_need_ss);
 }
 
 bool CMscnProblem::b_validate_amount_xd_xf()
@@ -646,12 +443,12 @@ bool CMscnProblem::b_validate_amount_xd_xf()
 
 		for(size_t d = 0; d < i_deliverers; ++d)
 		{
-			d_resource_sum += v_amount_xd[d][f];
+			d_resource_sum += pc_solution->v_amount_xd[d][f];
 		}
 
 		for(size_t m = 0; m < i_magazines; ++m)
 		{
-			d_prod_sum += v_amount_xf[f][m];
+			d_prod_sum += pc_solution->v_amount_xf[f][m];
 		}
 
 		if(d_resource_sum < d_prod_sum)
@@ -670,12 +467,12 @@ bool CMscnProblem::b_validate_amount_xf_xm()
 
 		for(size_t f = 0; f < i_factories; ++f)
 		{
-			d_prod_magazine_sum += v_amount_xf[f][m];
+			d_prod_magazine_sum += pc_solution->v_amount_xf[f][m];
 		}
 
 		for(size_t s = 0; s < i_shops; ++s)
 		{
-			d_prod_shop_sum += v_amount_xm[m][s];
+			d_prod_shop_sum += pc_solution->v_amount_xm[m][s];
 		}
 
 		if(d_prod_magazine_sum < d_prod_shop_sum)
@@ -685,252 +482,38 @@ bool CMscnProblem::b_validate_amount_xf_xm()
 	return true;
 }
 
-bool CMscnProblem::b_validate_amount(vector<vector<double>>& vAmount, vector<double>& vLimits)
+bool CMscnProblem::b_apply_solution(CMscnSolution& cSolution, int &iErrorCode)
 {
-	for(size_t i = 0; i < vLimits.size(); ++i)
+	bool b_solution_size_valid = cSolution.iGetDeliverers() == i_deliverers && cSolution.iGetFactories() == i_factories &&
+		cSolution.iGetMagazines() == i_magazines && cSolution.iGetShops() == i_shops;
+
+	if(b_solution_size_valid)
 	{
-		double d_sum = 0.0;
-
-		for(size_t j = 0; j < vAmount.size(); ++j)
-		{
-			d_sum += vAmount[j][i];
-		}
-
-		if(d_sum > vLimits[i])
-			return false;
-	}
-
-	return true;
-}
-
-bool CMscnProblem::b_validate_prod_cap(vector<vector<double>>& vAmount, vector<double>& vCapacity)
-{
-	for(size_t i = 0; i < vCapacity.size(); ++i)
-	{
-		double d_sum = 0.0;
-
-		for(size_t j = 0; j < vAmount[i].size(); ++j)
-		{
-			d_sum += vAmount[i][j];
-		}
-
-		if(d_sum > vCapacity[i])
-			return false;
-	}
-
-	return true;
-}
-
-bool CMscnProblem::b_write_tab(FILE * pfFile, string sTabName, vector<double>& vTab)
-{
-	for(size_t i = 0; i < vTab.size(); ++i)
-	{
-		if(fprintf(pfFile, (sTabName + TABLE_WRITE_FORMAT).c_str(), i, vTab[i]) < 0)
-			return false;
-	}
-
-	if(fprintf(pfFile, "\n") < 0)
-		return false;
-
-	return true;
-}
-
-bool CMscnProblem::b_write_matrix(FILE * pfFile, string sMatrixName, vector<vector<double>>& vMatrix)
-{
-	for(size_t i = 0; i < vMatrix.size(); ++i)
-	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
-		{
-			if(fprintf(pfFile, (sMatrixName + MATRIX_WRITE_FORMAT).c_str(), i, j, vMatrix[i][j]) < 0)
-				return false;
-		}	
-	}
-
-	if(fprintf(pfFile, "\n") < 0)
-		return false;
-
-	return true;
-}
-
-bool CMscnProblem::b_write_range(FILE * pfFile, string sRangeName, vector<vector<vector<double>>>& vRange)
-{
-	for(size_t i = 0; i < vRange.size(); ++i)
-	{
-		for(size_t j = 0; j < vRange[0].size(); ++j)
-		{
-			if(fprintf(pfFile, (sRangeName + RANGE_WRITE_FORMAT).c_str(), i, j, vRange[i][j][0], vRange[i][j][1]) < 0)
-				return false;
-		}
-	}
-
-	if(fprintf(pfFile, "\n") < 0)
-		return false;
-
-	return true;
-}
-
-bool CMscnProblem::b_read_tab(FILE * pfFile, string sTabName, vector<double>& vTab)
-{
-	int i_row;
-
-	for(size_t i = 0; i < vTab.size(); ++i)
-	{	
-		float f_tmp;
-
-		fscanf(pfFile, (sTabName + TABLE_WRITE_FORMAT).c_str(), &i_row, &f_tmp);
-			
-		if(i_row != i || !b_set_value(vTab, i, f_tmp))
-			return false;
-	}
-
-	return true;
-}
-
-bool CMscnProblem::b_read_matrix(FILE * pfFile, string sMatrixName, vector<vector<double>>& vMatrix)
-{
-	int i_row;
-	int i_column;
-
-	for(size_t i = 0; i < vMatrix.size(); ++i)
-	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
-		{
-			float f_tmp;
-			fscanf(pfFile, (sMatrixName + MATRIX_WRITE_FORMAT).c_str(), &i_row, &i_column, &f_tmp);
-			if(i_row != i || i_column != j || !b_set_value(vMatrix, i, j, f_tmp))
-			   return false;
-		}	
-	}
-
-	return true;
-}
-
-bool CMscnProblem::b_read_range(FILE * pfFile, string sRangeName, vector<vector<vector<double>>>& vRange)
-{
-	int i_row;
-	int i_column;
-
-	for(size_t i = 0; i < vRange.size(); ++i)
-	{
-		for(size_t j = 0; j < vRange[0].size(); ++j)
-		{
-			float f_tmp_min;
-			float f_tmp_max;
-
-			fscanf(pfFile, (sRangeName + RANGE_WRITE_FORMAT).c_str(), &i_row, &i_column, &f_tmp_min, &f_tmp_max);
-			if(i_row != i || i_column != j || !b_set_range_value(vRange, i, j, f_tmp_min, f_tmp_max))
-				return false;
-		}
-	}
-
-	return true;
-}
-
-bool CMscnProblem::b_apply_solution(vector<double>& vSolution, int &iErrorCode)
-{
-	int i_expected_solution_size = INSTANCE_TYPE_AMOUNT + (i_deliverers * i_factories) + (i_factories * i_magazines) +
-		(i_magazines * i_shops);
-
-	if(vSolution.size() == i_expected_solution_size)
-	{
-		int i_index = 0;
-		if(vSolution[i_index++] != i_deliverers)
-		{
-			iErrorCode = INCOMPATIBLE_INSTANCE_NUMBER;
-			return false;
-		}
-
-		if(vSolution[i_index++] != i_factories)
-		{
-			iErrorCode = INCOMPATIBLE_INSTANCE_NUMBER;
-			return false;
-		}
-
-		if(vSolution[i_index++] != i_magazines)
-		{
-			iErrorCode = INCOMPATIBLE_INSTANCE_NUMBER;
-			return false;
-		}
-
-		if(vSolution[i_index++] != i_shops)
-		{
-			iErrorCode = INCOMPATIBLE_INSTANCE_NUMBER;
-			return false;
-		}
-
-		if(!b_set_matrix_values(v_amount_xd, v_minmax_xd, vSolution, i_index, iErrorCode))
-		{
-			return false;
-		}
-
-		if(!b_set_matrix_values(v_amount_xf, v_minmax_xf, vSolution, i_index, iErrorCode))
-		{
-			return false;
-		}
-
-		if(!b_set_matrix_values(v_amount_xm, v_minmax_xm, vSolution, i_index, iErrorCode))
-		{
-			return false;
-		}
-
-		iErrorCode = 0;
+		pc_solution = &cSolution;
 		return true;
 	}
-
+			
 	iErrorCode = INVALID_SOLUTION_FORMAT;
 	return false;
 }
 
-bool CMscnProblem::b_check_range(vector<vector<vector<double>>>& vRange, int iRow, int iColumn, double dValue)
-{
-	vector<double> v_range = v_get_range(vRange, iRow, iColumn);
-
-	return dValue >= v_range[0] && dValue <= v_range[1];
-}
-
-bool CMscnProblem::b_set_matrix_values(vector<vector<double>>& vMatrix, vector<vector<vector<double>>> &vRange, 
-									   vector<double> &vSolution, int & iIndex, int &iErrorCode)
-{
-	for(size_t i = 0; i < vMatrix.size(); ++i)
-	{
-		for(size_t j = 0; j < vMatrix[0].size(); ++j)
-		{
-			if(b_check_range(vRange, i, j, vSolution[iIndex]))
-			{
-				if(!b_set_value(vMatrix, i, j, vSolution[iIndex++]))
-				{
-					iErrorCode = NEGATIVE_NUMBER_ERR;
-					return false;
-				}		
-			}
-			else
-			{
-				iErrorCode = VALUE_OUT_OF_RANGE;
-				return false;
-			}
-		}
-	}
-
-	return true;
-}
-
 double CMscnProblem::d_calculate_quality()
 {
-	////////////// calculate costs //////////////////
+	//////////////  calculate costs  //////////////////
 
-	double d_total_costs_K = d_calculate_subtotal_costs(v_costs_cd, v_amount_xd) +
-		d_calculate_subtotal_costs(v_costs_cf, v_amount_xf) +
-		d_calculate_subtotal_costs(v_costs_cm, v_amount_xm);
+	double d_total_costs_K = d_calculate_subtotal_costs(v_costs_cd, pc_solution->v_amount_xd) +
+		d_calculate_subtotal_costs(v_costs_cf, pc_solution->v_amount_xf) +
+		d_calculate_subtotal_costs(v_costs_cm, pc_solution->v_amount_xm);
 
 	////////////// calculate contracts costs /////////
 
-	double d_total_costs_KU = d_calculate_subtotal_contract(v_contract_ud, v_amount_xd) +
-		d_calculate_subtotal_contract(v_contract_uf, v_amount_xf) +
-		d_calculate_subtotal_contract(v_contract_um, v_amount_xm);
+	double d_total_costs_KU = d_calculate_subtotal_contract(v_contract_ud, pc_solution->v_amount_xd) +
+		d_calculate_subtotal_contract(v_contract_uf, pc_solution->v_amount_xf) +
+		d_calculate_subtotal_contract(v_contract_um, pc_solution->v_amount_xm);
 
 	////////////// calculate income //////////////////
 
-	double d_total_income = d_calculate_total_income(v_income_p, v_amount_xm);
+	double d_total_income = d_calculate_total_income(v_income_p, pc_solution->v_amount_xm);
 
 	return d_total_income - d_total_costs_K - d_total_costs_KU;
 }
@@ -1003,40 +586,4 @@ void CMscnProblem::v_random_fill_matrix(vector<vector<double>>& vMatrix, double 
 			b_set_value(vMatrix[i], j, cRand.dRange(dMinValue, dMaxValue));
 		}
 	}
-}
-
-vector<double> vLoadSolutionFromFile(string sFileName)
-{
-	FILE *pf_file = fopen((sFileName + FILE_FORMAT).c_str(), "r");
-	vector<double> v_output;
-
-	if(pf_file != NULL)
-	{
-		//read D, F, M, S
-		int i_input;
-		float f_input;
-		char c_dummy;
-
-		fscanf(pf_file, DEF_D INSTANCE_WRITE_FORMAT, &i_input);
-		v_output.push_back(i_input);
-
-		fscanf(pf_file, DEF_F INSTANCE_WRITE_FORMAT, &i_input);
-		v_output.push_back(i_input);
-
-		fscanf(pf_file, DEF_M INSTANCE_WRITE_FORMAT, &i_input);
-		v_output.push_back(i_input);
-
-		fscanf(pf_file, DEF_S INSTANCE_WRITE_FORMAT, &i_input);
-		v_output.push_back(i_input);
-
-		while(!feof(pf_file))
-		{
-			fscanf(pf_file, "%c%c" MATRIX_WRITE_FORMAT, &c_dummy, &c_dummy, &i_input, &i_input, &f_input);
-			v_output.push_back(f_input);
-		}
-
-		fclose(pf_file);
-	}
-
-	return v_output;	
 }

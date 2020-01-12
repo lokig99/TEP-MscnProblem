@@ -11,16 +11,11 @@ public:
 	CRandomSearch() { pc_problem = NULL; }
 	CRandomSearch(CMscnProblem &cProblem) { pc_problem = &cProblem; }
 	void vSetInstance(CMscnProblem &cProblem) { pc_problem = &cProblem; }
-	double dGenerateSolution(int iIterations, vector<double> &vSolution);
-	double dGenerateSolution(int iIterations, vector<double> &vSolution, int iSeed);
-	double dGenerateSolution(int iIterations, int iSeed);
+	CMscnSolution cGenerateSolution(int iIterations, double &dResultQuality);
+	CMscnSolution cGenerateSolution(int iIterations, int iSeed, double &dResultQuality);
 
 private:
 	CMscnProblem *pc_problem;
-	double d_resources_amount(vector<vector<double>> &vMatrix, int iPosition);
-	bool b_fill_safe_xd();
-	bool b_fill_safe_xf();
-	bool b_fill_safe_xm();
 	bool b_save_to_csv_file(vector<double> &vSolutionQualityHistory);
 };
 

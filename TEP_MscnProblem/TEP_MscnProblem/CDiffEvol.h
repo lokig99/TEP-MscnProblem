@@ -19,9 +19,8 @@ public:
 	CDiffEvol(CMscnProblem &cProblem) { pc_problem = &cProblem; }
 
 	void vSetInstance(CMscnProblem &cProblem) { pc_problem = &cProblem; }
-	double dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double> &vSolution);
-	double dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double> &vSolution, int iSeed);
-	double dGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed);
+	CMscnSolution* pcGenerateSolution(int iFitnessCalls, int iInitPopulation, double &dResultQuality);
+	CMscnSolution* pcGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed, double &dResultQuality);
 
 private:
 	struct Indiv

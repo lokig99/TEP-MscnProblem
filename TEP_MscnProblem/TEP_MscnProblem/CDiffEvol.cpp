@@ -3,15 +3,15 @@
 #include <iostream>
 
 
-double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double>& vSolution)
+CMscnSolution* CDiffEvol::pcGenerateSolution(int iFitnessCalls, int iInitPopulation, double &dResultQuality)
 {
-	return dGenerateSolution(iFitnessCalls, iInitPopulation, vSolution, 0);
+	return pcGenerateSolution(iFitnessCalls, iInitPopulation, 0, dResultQuality);
 }
 
-double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vector<double>& vSolution, int iSeed)
+CMscnSolution* CDiffEvol::pcGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed, double &dResultQuality)
 {
 	if(pc_problem == NULL || iFitnessCalls < 1 || iInitPopulation < MIN_POPULATION)
-		return -1.0;
+		return NULL;
 
 	CRandom  c_rand;
 	if(iSeed == 0)
@@ -19,7 +19,8 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	else
 		c_rand.vSetGlobalSeed(iSeed);
 
-	CRandomSearch c_rs(*pc_problem);
+	CMscnSolution c_sol;
+	c_sol.vSetProblem(*pc_problem);
 	vector<vector<double>> v_solution_quality_history;
 	vector<Indiv*> v_population;
 	vector<double> v_best_solution;
@@ -32,7 +33,8 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 	//initialize population
 	for(int i = 0; i < iInitPopulation; ++i)
 	{
-		c_rs.dGenerateSolution(1, v_tmp, rand());
+		c_sol.vGenerateInstance(rand());
+		v_tmp = c_sol.vGetVector();
 		v_population.push_back(new Indiv(v_tmp));
 		v_solution_quality_history.push_back(vector<double>());
 	}
@@ -80,18 +82,18 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 
 					double d_old_fitness, d_new_fitness;
 					v_tmp = p_ind->v_vector();
-					d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
+					//d_old_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
 					v_tmp = p_ind_new->v_vector();
-					d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
+					//d_new_fitness = pc_problem->dGetQuality(v_tmp, i_err_code);
 
-					if(d_new_fitness >= d_old_fitness)
+				/*	if(d_new_fitness >= d_old_fitness)
 					{
 						delete p_ind;
 						v_population[i] = p_ind_new;
 					}
 					else
-						delete p_ind_new;
+						delete p_ind_new;*/
 
 					++i_fit_calls;
 					v_solution_quality_history[i].push_back(std::max(d_new_fitness, d_old_fitness));
@@ -111,21 +113,16 @@ double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, vect
 		delete *it;
 	v_population.clear();
 
-	pc_problem->b_apply_solution(v_best_solution, i_err_code);
+	//pc_problem->b_apply_solution(v_best_solution, i_err_code);
 	b_save_to_csv_file(v_solution_quality_history);
-	return d_best_quality;
-}
-
-double CDiffEvol::dGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed)
-{
-	vector<double> v_dummy;
-	return dGenerateSolution(iFitnessCalls, iInitPopulation, v_dummy, iSeed);
+	return NULL; //d_best_quality;
 }
 
 bool CDiffEvol::b_validate_genotype(Indiv & ind, int iErrCode)
 {
 	vector<double> v_tmp = ind.v_vector();
-	return pc_problem->bConstraintsSatisfied(v_tmp, iErrCode);
+	//return pc_problem->bConstraintsSatisfied(v_tmp, iErrCode);
+	return false;
 }
 
 bool CDiffEvol::b_indivs_are_different(vector<Indiv*> &vIndivs)
@@ -182,7 +179,7 @@ vector<double> CDiffEvol::v_get_best_solution(vector<Indiv*>& vIndivs, double &d
 {
 	int i_err;
 	vector<double> v_best_solution = vIndivs[0]->v_vector();
-	double d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err);
+	/*double d_best_quality = pc_problem->dGetQuality(v_best_solution, i_err);
 
 	for(size_t i = 1; i < vIndivs.size(); ++i)
 	{
@@ -196,7 +193,7 @@ vector<double> CDiffEvol::v_get_best_solution(vector<Indiv*>& vIndivs, double &d
 		}
 	}
 
-	dQualityOutput = d_best_quality;
+	dQualityOutput = d_best_quality;*/
 	return v_best_solution;
 }
 

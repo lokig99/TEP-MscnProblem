@@ -154,7 +154,9 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="CDiffEvol.h" />
+    <ClInclude Include="CMscn.h" />
     <ClInclude Include="CMscnProblem.h" />
+    <ClInclude Include="CMscnSolution.h" />
     <ClInclude Include="CRandom.h" />
     <ClInclude Include="CRandomSearch.h" />
     <ClInclude Include="pch.h" />
@@ -162,7 +164,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="CDiffEvol.cpp" />
+    <ClCompile Include="CMscn.cpp" />
     <ClCompile Include="CMscnProblem.cpp" />
+    <ClCompile Include="CMscnSolution.cpp" />
     <ClCompile Include="CRandom.cpp" />
     <ClCompile Include="CRandomSearch.cpp" />
     <ClCompile Include="Main.cpp" />
