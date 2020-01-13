@@ -25,10 +25,11 @@ public:
 private:
 	CMscnProblem *pc_problem;
 
-	bool b_validate_genotype(CMscnSolution &cIndividual, int iErrCode);
+	bool b_validate_genotype(CMscnSolution &cIndividual, const string &sMatrixName);
 	bool b_indivs_are_different(vector<CMscnSolution*> &vIndivs);
 	bool b_indivs_are_equal(vector<CMscnSolution*> &vIndivs);
 	bool b_save_to_csv_file(vector<vector<double>*> *pvSolutionQualityHistory);
 	int i_get_best_solution(vector<CMscnSolution*> &vIndivs, double &dQualityOutput);
+	void v_mutate_genotype(vector<CMscnSolution*> &vBasePool, CMscnSolution &cMutatedIndiv, const string &sMatrixName);
 };
 

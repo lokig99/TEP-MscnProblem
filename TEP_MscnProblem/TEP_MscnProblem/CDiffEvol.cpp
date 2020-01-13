@@ -60,75 +60,19 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				CMscnSolution *p_ind_new = new CMscnSolution();
 				*p_ind_new = *p_base;
 
-				for(size_t i = 0; i < p_base->pv_amount_xd->size(); ++i)
-				{
-					for(size_t j = 0; j < (*p_base->pv_amount_xd)[0].size(); ++j)
-					{
-						const double D_BACKUP_GENE = (*p_ind_new->pv_amount_xd)[i][j];
-
-						if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
-						{
-							(*p_ind_new->pv_amount_xd)[i][j] = (*p_base->pv_amount_xd)[i][j] +
-								DIFF_WEIGHT * ((*p_add0->pv_amount_xd)[i][j] - (*p_add1->pv_amount_xd)[i][j]);
-
-							if((*p_ind_new->pv_amount_xd)[i][j] < ROUND_TO_ZERO_BELOW)
-								(*p_ind_new->pv_amount_xd)[i][j] = 0.0;
-						}
-						else
-							(*p_ind_new->pv_amount_xd)[i][j] = (*p_ind->pv_amount_xd)[i][j];
-
-						if(!b_validate_genotype(*p_ind_new, i_err_code))
-							(*p_ind_new->pv_amount_xd)[i][j] = D_BACKUP_GENE;
-					}	
-				}
-
-				for(size_t i = 0; i < p_base->pv_amount_xf->size(); ++i)
-				{
-					for(size_t j = 0; j < (*p_base->pv_amount_xf)[0].size(); ++j)
-					{
-						const double D_BACKUP_GENE = (*p_ind_new->pv_amount_xf)[i][j];
-
-						if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
-						{
-							(*p_ind_new->pv_amount_xf)[i][j] = (*p_base->pv_amount_xf)[i][j] +
-								DIFF_WEIGHT * ((*p_add0->pv_amount_xf)[i][j] - (*p_add1->pv_amount_xf)[i][j]);
-
-							if((*p_ind_new->pv_amount_xf)[i][j] < ROUND_TO_ZERO_BELOW)
-								(*p_ind_new->pv_amount_xf)[i][j] = 0.0;
-						}
-						else
-							(*p_ind_new->pv_amount_xf)[i][j] = (*p_ind_new->pv_amount_xf)[i][j];
-
-						if(!b_validate_genotype(*p_ind_new, i_err_code))
-							(*p_ind_new->pv_amount_xf)[i][j] = D_BACKUP_GENE;
-					}
-				}
-
-				for(size_t i = 0; i < p_base->pv_amount_xm->size(); ++i)
-				{
-					for(size_t j = 0; j < (*p_base->pv_amount_xm)[0].size(); ++j)
-					{
-						const double D_BACKUP_GENE = (*p_ind_new->pv_amount_xm)[i][j];
-
-						if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
-						{
-							(*p_ind_new->pv_amount_xm)[i][j] = (*p_base->pv_amount_xm)[i][j] +
-								DIFF_WEIGHT * ((*p_add0->pv_amount_xm)[i][j] - (*p_add1->pv_amount_xm)[i][j]);
-
-							if((*p_ind_new->pv_amount_xm)[i][j] < ROUND_TO_ZERO_BELOW)
-								(*p_ind_new->pv_amount_xm)[i][j] = 0.0;
-						}
-						else
-							(*p_ind_new->pv_amount_xm)[i][j] = (*p_ind->pv_amount_xm)[i][j];
-
-						if(!b_validate_genotype(*p_ind_new, i_err_code))
-							(*p_ind_new->pv_amount_xm)[i][j] = D_BACKUP_GENE;
-					}
-				}
+				v_mutate_genotype(v_indivs, *p_ind_new, DEF_XD);
+				v_mutate_genotype(v_indivs, *p_ind_new, DEF_XF);
+				v_mutate_genotype(v_indivs, *p_ind_new, DEF_XM);
 
 				double d_old_fitness, d_new_fitness;
-				d_old_fitness = pc_problem->dGetQuality(*p_ind, i_err_code);
-				d_new_fitness = pc_problem->dGetQuality(*p_ind_new, i_err_code);
+				pc_problem->b_apply_solution(*p_ind, i_err_code);
+				d_old_fitness = pc_problem->d_calculate_quality();
+				if(i_err_code != 0)
+					++i_errors;
+				pc_problem->b_apply_solution(*p_ind_new, i_err_code);
+				d_new_fitness = pc_problem->d_calculate_quality();
+				if(i_err_code != 0)
+					++i_errors;
 
 				if(d_new_fitness >= d_old_fitness)
 				{
@@ -148,6 +92,7 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				i_fit_calls = iFitnessCalls;	
 	}
 
+	printf("\nErrors: %d", i_errors);
 	c_best_solution = *v_population[i_get_best_solution(v_population, d_best_quality)];
 	b_save_to_csv_file(pv_solution_quality_history);
 	
@@ -165,9 +110,29 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 	return c_best_solution;
 }
 
-bool CDiffEvol::b_validate_genotype(CMscnSolution & cInd, int iErrCode)
+bool CDiffEvol::b_validate_genotype(CMscnSolution & cInd, const string &sMatrixName)
 {
-	return pc_problem->bConstraintsSatisfied(cInd, iErrCode);
+	int i_err_code;
+	if(!pc_problem->b_apply_solution(cInd, i_err_code))
+		return false;
+
+	if(sMatrixName == DEF_XD)
+	{
+		return pc_problem->b_validate_prod_cap_sd() 
+			&& pc_problem->b_validate_amount_xd_xf();
+	}
+	else if(sMatrixName == DEF_XF)
+	{
+		return  pc_problem->b_validate_amount_xd_xf()
+			&& pc_problem->b_validate_prod_cap_sf() && pc_problem->b_validate_amount_xf_xm();
+	}
+	else if(sMatrixName == DEF_XM)
+	{
+		return pc_problem->b_validate_amount_sm()
+			&& pc_problem->b_validate_amount_ss() && pc_problem->b_validate_amount_xf_xm();
+	}
+	else
+		return false;
 }
 
 bool CDiffEvol::b_indivs_are_different(vector<CMscnSolution*> &vIndivs)
@@ -247,10 +212,72 @@ int CDiffEvol::i_get_best_solution(vector<CMscnSolution*>& vIndivs, double &dQua
 		{
 			d_best_quality = d_quality;
 			i_position_of_best = i;
-		}
-			
+		}			
 	}
 
 	dQualityOutput = d_best_quality;
 	return i_position_of_best;
+}
+
+void CDiffEvol::v_mutate_genotype(vector<CMscnSolution*>& vBasePool, CMscnSolution & cMutatedIndiv, const string &sMatrixName)
+{
+	if(vBasePool.size() < 4)
+		return;
+
+	CRandom c_rand;
+	CMscnSolution* p_ind_new = &cMutatedIndiv;
+	vector<vector<double>> *pv_matrix_old;
+	vector<vector<double>> *pv_matrix_base;
+	vector<vector<double>> *pv_matrix_add0;
+	vector<vector<double>> *pv_matrix_add1;
+	vector<vector<double>> *pv_matrix_new;
+
+	if(sMatrixName == DEF_XD)
+	{
+		pv_matrix_old = vBasePool[0]->pv_amount_xd;
+		pv_matrix_base = vBasePool[1]->pv_amount_xd;
+		pv_matrix_add0 = vBasePool[2]->pv_amount_xd;
+		pv_matrix_add1 = vBasePool[3]->pv_amount_xd;
+		pv_matrix_new = cMutatedIndiv.pv_amount_xd;
+	}
+	else if(sMatrixName == DEF_XF)
+	{
+		pv_matrix_old = vBasePool[0]->pv_amount_xf;
+		pv_matrix_base = vBasePool[1]->pv_amount_xf;
+		pv_matrix_add0 = vBasePool[2]->pv_amount_xf;
+		pv_matrix_add1 = vBasePool[3]->pv_amount_xf;
+		pv_matrix_new = cMutatedIndiv.pv_amount_xf;
+	}
+	else if(sMatrixName == DEF_XM)
+	{
+		pv_matrix_old = vBasePool[0]->pv_amount_xm;
+		pv_matrix_base = vBasePool[1]->pv_amount_xm;
+		pv_matrix_add0 = vBasePool[2]->pv_amount_xm;
+		pv_matrix_add1 = vBasePool[3]->pv_amount_xm;
+		pv_matrix_new = cMutatedIndiv.pv_amount_xm;
+	}
+	else
+		return;
+
+	for(size_t i = 0; i < pv_matrix_base->size(); ++i)
+	{
+		for(size_t j = 0; j < pv_matrix_base->at(0).size(); ++j)
+		{
+			const double D_BACKUP_GENE = pv_matrix_new->at(i).at(j);
+
+			if(c_rand.dRange(0, 1) < CROSS_PROBABILITY)
+			{
+				pv_matrix_new->at(i).at(j) = pv_matrix_base->at(i).at(j) +
+					DIFF_WEIGHT * (pv_matrix_add0->at(i).at(j) - pv_matrix_add1->at(i).at(j));
+
+				if(pv_matrix_new->at(i).at(j) < ROUND_TO_ZERO_BELOW)
+					pv_matrix_new->at(i).at(j) = 0.0;
+			}
+			else
+				pv_matrix_new->at(i).at(j) = pv_matrix_base->at(i).at(j);
+
+			if(!b_validate_genotype(cMutatedIndiv, sMatrixName))
+				pv_matrix_new->at(i).at(j) = D_BACKUP_GENE;
+		}
+	}
 }
