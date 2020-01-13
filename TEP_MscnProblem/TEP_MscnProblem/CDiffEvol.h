@@ -28,7 +28,7 @@ private:
 	bool b_validate_genotype(CMscnSolution &cIndividual, int iErrCode);
 	bool b_indivs_are_different(vector<CMscnSolution*> &vIndivs);
 	bool b_indivs_are_equal(vector<CMscnSolution*> &vIndivs);
-	bool b_save_to_csv_file(vector<vector<double>> &vSolutionQualityHistory);
+	bool b_save_to_csv_file(vector<vector<double>*> *pvSolutionQualityHistory);
 	int i_get_best_solution(vector<CMscnSolution*> &vIndivs, double &dQualityOutput);
 };
 
