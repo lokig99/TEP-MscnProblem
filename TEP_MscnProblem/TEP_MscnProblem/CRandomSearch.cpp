@@ -34,13 +34,13 @@ CMscnSolution CRandomSearch::cGenerateSolution(int iIterations, int iSeed, doubl
 
 		if(b_best_empty)
 		{
-			c_best_solution = c_solution;
+			c_solution.vTranferDataTo(c_best_solution);
 			d_best_quality = d_quality;
 			b_best_empty = false;
 		}
 		else if(d_quality > d_best_quality)
 		{
-			c_best_solution = c_solution;
+			c_solution.vTranferDataTo(c_best_solution);
 			d_best_quality = d_quality;
 		}
 	}

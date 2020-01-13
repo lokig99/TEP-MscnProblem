@@ -19,30 +19,16 @@ public:
 	CDiffEvol(CMscnProblem &cProblem) { pc_problem = &cProblem; }
 
 	void vSetInstance(CMscnProblem &cProblem) { pc_problem = &cProblem; }
-	CMscnSolution* pcGenerateSolution(int iFitnessCalls, int iInitPopulation, double &dResultQuality);
-	CMscnSolution* pcGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed, double &dResultQuality);
+	CMscnSolution cGenerateSolution(int iFitnessCalls, int iInitPopulation, double &dResultQuality);
+	CMscnSolution cGenerateSolution(int iFitnessCalls, int iInitPopulation, int iSeed, double &dResultQuality);
 
 private:
-	struct Indiv
-	{
-		Indiv(int iGenotypeSize);
-		Indiv(vector<double> &vSolution);
-		Indiv(const Indiv &other);
-		~Indiv();
-		void operator=(const Indiv &other);
-		void v_copy(const Indiv &other);
-		vector<double> v_vector();
-
-		double *pd_tab;
-		int i_genotype_size;
-	};
-
 	CMscnProblem *pc_problem;
 
-	bool b_validate_genotype(Indiv &ind, int iErrCode);
-	bool b_indivs_are_different(vector<Indiv*> &vIndivs);
-	bool b_indivs_are_equal(vector<Indiv*> &vIndivs);	
+	bool b_validate_genotype(CMscnSolution &cIndividual, int iErrCode);
+	bool b_indivs_are_different(vector<CMscnSolution*> &vIndivs);
+	bool b_indivs_are_equal(vector<CMscnSolution*> &vIndivs);
 	bool b_save_to_csv_file(vector<vector<double>> &vSolutionQualityHistory);
-	vector<double> v_get_best_solution(vector<Indiv*> &vIndivs, double &dQualityOutput);
+	int i_get_best_solution(vector<CMscnSolution*> &vIndivs, double &dQualityOutput);
 };
 

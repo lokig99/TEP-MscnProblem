@@ -3,7 +3,7 @@
 #include <string>
 #include "CMscnProblem.h"
 #include "CRandomSearch.h"
-//#include "CDiffEvol.h"
+#include "CDiffEvol.h"
 
 CMscnProblem c_input_data()
 {
@@ -136,7 +136,7 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	vCreateSolutionFile(c_solution);
 }
 
-/*void vGenerateSolutionDE(CMscnProblem &cProblem)
+void vGenerateSolutionDE(CMscnProblem &cProblem)
 {
 	std::cout << "Enter seed (0 = default seed): ";
 	int i_seed;
@@ -151,11 +151,13 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	std::cin >> i_pop;
 
 	CDiffEvol c_evol(cProblem);
+	CMscnSolution c_sol;
+	double d_quality;
 
 	clock_t timer;
 	timer = clock();
 
-	double d_quality = c_evol.dGenerateSolution(i_evals, i_pop, i_seed);
+	c_sol = c_evol.cGenerateSolution(i_evals, i_pop, i_seed, d_quality);
 
 	timer = clock() - timer;
 
@@ -163,8 +165,8 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	std::cout << "\nQuality of found solution for current problem" << "\n= " << d_quality << std::endl;
 
 	if(d_quality >= 0.0)
-		vCreateSolutionFile(cProblem);
-}*/
+		vCreateSolutionFile(c_sol);
+}
 
 void vLoadProblemFile(CMscnProblem &cProblem)
 {
@@ -239,7 +241,7 @@ void vShowMenu(CMscnProblem &cProblem)
 		vShowMenu(cProblem);
 		break;
 	case 7:
-	//	vGenerateSolutionDE(cProblem);
+		vGenerateSolutionDE(cProblem);
 		vShowMenu(cProblem);
 		break;
 	case 9:

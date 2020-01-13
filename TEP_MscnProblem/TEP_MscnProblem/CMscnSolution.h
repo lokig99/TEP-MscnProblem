@@ -7,9 +7,15 @@
 class CMscnSolution : public CMscn
 {
 public:	
+	CMscnSolution();
+	CMscnSolution(const CMscnSolution &cOther);
+	~CMscnSolution();
+
 	friend class CMscnProblem;
+	friend class CDiffEvol;
 
 	void vSetProblem(CMscnProblem &cProblem);
+	void vTranferDataTo(CMscnSolution &cOther);
 	virtual bool bSetDeliverers(int iAmount) override;
 	virtual bool bSetFactories(int iAmount) override;
 	virtual bool bSetMagazines(int iAmount) override;
@@ -24,16 +30,19 @@ public:
 
 	vector<double> vGetVector();
 
+	void operator=(const CMscnSolution &cOther);
+
 private:
 	CMscnProblem *pc_problem;
 
-	vector<vector<double>> v_amount_xd;
-	vector<vector<double>> v_amount_xf;
-	vector<vector<double>> v_amount_xm;
+	vector<vector<double>> *pv_amount_xd;
+	vector<vector<double>> *pv_amount_xf;
+	vector<vector<double>> *pv_amount_xm;
 
 	double d_resources_amount(vector<vector<double>> &vMatrix, int iPosition);
 	bool b_fill_safe_xd();
 	bool b_fill_safe_xf();
 	bool b_fill_safe_xm();
+	void v_copy_matrix(vector<vector<double>> &vTarget, vector<vector<double>> &vSource);
 };
 

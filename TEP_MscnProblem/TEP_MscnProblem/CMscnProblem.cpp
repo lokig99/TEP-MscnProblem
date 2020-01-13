@@ -168,7 +168,7 @@ vector<double> CMscnProblem::vGetRangeXM(int iRow, int iColumn)
 double CMscnProblem::dGetQuality(CMscnSolution &cSolution, int & iErrorCode)
 {
 	if(!bConstraintsSatisfied(cSolution, iErrorCode))
-		return NAN;
+		return -NAN;
 	
 	return d_calculate_quality();
 }
@@ -416,22 +416,22 @@ void CMscnProblem::vGenerateInstance(int iInstanceSeed)
 
 bool CMscnProblem::b_validate_prod_cap_sd()
 {
-	return b_validate_prod_cap(pc_solution->v_amount_xd, v_production_cap_sd);
+	return b_validate_prod_cap(*pc_solution->pv_amount_xd, v_production_cap_sd);
 }
 
 bool CMscnProblem::b_validate_prod_cap_sf()
 {
-	return b_validate_prod_cap( pc_solution->v_amount_xf, v_production_cap_sf);
+	return b_validate_prod_cap(*pc_solution->pv_amount_xf, v_production_cap_sf);
 }
 
 bool CMscnProblem::b_validate_amount_sm()
 {
-	return  b_validate_amount(pc_solution->v_amount_xm, v_capacity_sm);
+	return  b_validate_amount(*pc_solution->pv_amount_xm, v_capacity_sm);
 }
 
 bool CMscnProblem::b_validate_amount_ss()
 {
-	return  b_validate_amount(pc_solution->v_amount_xm, v_need_ss);
+	return  b_validate_amount(*pc_solution->pv_amount_xm, v_need_ss);
 }
 
 bool CMscnProblem::b_validate_amount_xd_xf()
@@ -443,12 +443,12 @@ bool CMscnProblem::b_validate_amount_xd_xf()
 
 		for(size_t d = 0; d < i_deliverers; ++d)
 		{
-			d_resource_sum += pc_solution->v_amount_xd[d][f];
+			d_resource_sum += (*pc_solution->pv_amount_xd)[d][f];
 		}
 
 		for(size_t m = 0; m < i_magazines; ++m)
 		{
-			d_prod_sum += pc_solution->v_amount_xf[f][m];
+			d_prod_sum += (*pc_solution->pv_amount_xf)[f][m];
 		}
 
 		if(d_resource_sum < d_prod_sum)
@@ -467,12 +467,12 @@ bool CMscnProblem::b_validate_amount_xf_xm()
 
 		for(size_t f = 0; f < i_factories; ++f)
 		{
-			d_prod_magazine_sum += pc_solution->v_amount_xf[f][m];
+			d_prod_magazine_sum += (*pc_solution->pv_amount_xf)[f][m];
 		}
 
 		for(size_t s = 0; s < i_shops; ++s)
 		{
-			d_prod_shop_sum += pc_solution->v_amount_xm[m][s];
+			d_prod_shop_sum += (*pc_solution->pv_amount_xm)[m][s];
 		}
 
 		if(d_prod_magazine_sum < d_prod_shop_sum)
@@ -501,19 +501,19 @@ double CMscnProblem::d_calculate_quality()
 {
 	//////////////  calculate costs  //////////////////
 
-	double d_total_costs_K = d_calculate_subtotal_costs(v_costs_cd, pc_solution->v_amount_xd) +
-		d_calculate_subtotal_costs(v_costs_cf, pc_solution->v_amount_xf) +
-		d_calculate_subtotal_costs(v_costs_cm, pc_solution->v_amount_xm);
+	double d_total_costs_K = d_calculate_subtotal_costs(v_costs_cd, *pc_solution->pv_amount_xd) +
+		d_calculate_subtotal_costs(v_costs_cf, *pc_solution->pv_amount_xf) +
+		d_calculate_subtotal_costs(v_costs_cm, *pc_solution->pv_amount_xm);
 
 	////////////// calculate contracts costs /////////
 
-	double d_total_costs_KU = d_calculate_subtotal_contract(v_contract_ud, pc_solution->v_amount_xd) +
-		d_calculate_subtotal_contract(v_contract_uf, pc_solution->v_amount_xf) +
-		d_calculate_subtotal_contract(v_contract_um, pc_solution->v_amount_xm);
+	double d_total_costs_KU = d_calculate_subtotal_contract(v_contract_ud, *pc_solution->pv_amount_xd) +
+		d_calculate_subtotal_contract(v_contract_uf, *pc_solution->pv_amount_xf) +
+		d_calculate_subtotal_contract(v_contract_um, *pc_solution->pv_amount_xm);
 
 	////////////// calculate income //////////////////
 
-	double d_total_income = d_calculate_total_income(v_income_p, pc_solution->v_amount_xm);
+	double d_total_income = d_calculate_total_income(v_income_p, *pc_solution->pv_amount_xm);
 
 	return d_total_income - d_total_costs_K - d_total_costs_KU;
 }
