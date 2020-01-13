@@ -130,12 +130,7 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 
 					double d_old_fitness, d_new_fitness;
 					d_old_fitness = pc_problem->dGetQuality(*p_ind, i_err_code);
-
-					if(i_err_code != 0)
-						++i_errors;
 					d_new_fitness = pc_problem->dGetQuality(*p_ind_new, i_err_code);
-					if(i_err_code != 0)
-						++i_errors;
 
 					if(d_new_fitness >= d_old_fitness)
 					{
@@ -156,7 +151,7 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				i_fit_calls = iFitnessCalls;	
 	}
 
-	std::printf("\nErrors: %d", i_errors);
+	//std::printf("\nErrors: %d", i_errors);
 	c_best_solution = *v_population[i_get_best_solution(v_population, d_best_quality)];
 
 	//clear population
