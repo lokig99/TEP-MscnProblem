@@ -15,7 +15,7 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 
 	CRandom  c_rand;
 	if(iSeed == 0)
-		c_rand.vResetGlobalSeed();
+		c_rand.vSetGlobalSeed(rand());
 	else
 		c_rand.vSetGlobalSeed(iSeed);
 
@@ -27,7 +27,6 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 	int i_err_code = 0;
 	int i_fit_calls = 0;
 	int i_iteration_counter = 0;
-	int i_errors = 0;
 
 	//initialize population
 	for(int i = 0; i < iInitPopulation; ++i)
@@ -67,12 +66,9 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				double d_old_fitness, d_new_fitness;
 				pc_problem->b_apply_solution(*p_ind, i_err_code);
 				d_old_fitness = pc_problem->d_calculate_quality();
-				if(i_err_code != 0)
-					++i_errors;
+
 				pc_problem->b_apply_solution(*p_ind_new, i_err_code);
 				d_new_fitness = pc_problem->d_calculate_quality();
-				if(i_err_code != 0)
-					++i_errors;
 
 				if(d_new_fitness >= d_old_fitness)
 				{
@@ -85,6 +81,7 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				++i_fit_calls;
 				pv_solution_quality_history->at(i)->push_back(std::max(d_new_fitness, d_old_fitness));
 			}
+			
 		}
 
 		if(i_iteration_counter % ITERATION_INTERVAL == 0)
@@ -92,7 +89,6 @@ CMscnSolution CDiffEvol::cGenerateSolution(int iFitnessCalls, int iInitPopulatio
 				i_fit_calls = iFitnessCalls;	
 	}
 
-	printf("\nErrors: %d", i_errors);
 	c_best_solution = *v_population[i_get_best_solution(v_population, d_best_quality)];
 	b_save_to_csv_file(pv_solution_quality_history);
 	
@@ -274,7 +270,7 @@ void CDiffEvol::v_mutate_genotype(vector<CMscnSolution*>& vBasePool, CMscnSoluti
 					pv_matrix_new->at(i).at(j) = 0.0;
 			}
 			else
-				pv_matrix_new->at(i).at(j) = pv_matrix_base->at(i).at(j);
+				pv_matrix_new->at(i).at(j) = pv_matrix_old->at(i).at(j);
 
 			if(!b_validate_genotype(cMutatedIndiv, sMatrixName))
 				pv_matrix_new->at(i).at(j) = D_BACKUP_GENE;

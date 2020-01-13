@@ -57,7 +57,7 @@ void vCreateRandomProblemFile()
 {
 	CMscnProblem c_problem = c_input_data();
 
-	std::cout << "Enter seed (0 = default seed): ";
+	std::cout << "Enter seed (0 = random seed): ";
 	int i_seed;
 	std::cin >> i_seed;
 
@@ -112,7 +112,7 @@ void vCreateSolutionFile(CMscnSolution &cSolution)
 
 void vGenerateSolutionRS(CMscnProblem &cProblem)
 {
-	std::cout << "Enter seed (0 = default seed): ";
+	std::cout << "Enter seed (0 = random seed): ";
 	int i_seed;
 	std::cin >> i_seed;
 
@@ -120,7 +120,9 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 	int i_input;
 	std::cin >> i_input;
 
-	CRandomSearch c_search(cProblem);
+	CRandomSearch c_search;
+	c_search.vSetInstance(cProblem);
+
 	CMscnSolution c_solution;
 	double d_quality;
 
@@ -138,7 +140,7 @@ void vGenerateSolutionRS(CMscnProblem &cProblem)
 
 void vGenerateSolutionDE(CMscnProblem &cProblem)
 {
-	std::cout << "Enter seed (0 = default seed): ";
+	std::cout << "Enter seed (0 = random seed): ";
 	int i_seed;
 	std::cin >> i_seed;
 
@@ -150,7 +152,9 @@ void vGenerateSolutionDE(CMscnProblem &cProblem)
 	int i_pop;
 	std::cin >> i_pop;
 
-	CDiffEvol c_evol(cProblem);
+	CDiffEvol c_evol;
+	c_evol.vSetInstance(cProblem);
+
 	CMscnSolution c_sol;
 	double d_quality;
 

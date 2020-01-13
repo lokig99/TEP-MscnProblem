@@ -8,12 +8,34 @@ CMscnSolution CRandomSearch::cGenerateSolution(int iIterations, double &dResultQ
 
 CMscnSolution CRandomSearch::cGenerateSolution(int iIterations, int iSeed, double &dResultQuality)
 {
+	return cGenerateSolution(iIterations, 0, iSeed, dResultQuality);
+}
+
+bool CRandomSearch::b_save_to_csv_file(vector<double> &vSolutionQualityHistory)
+{
+	FILE *pf_file = fopen(CSV_FILE_NAME, "w");
+
+	if(pf_file != NULL)
+	{
+		for(size_t i = 0; i < vSolutionQualityHistory.size(); ++i)
+			if(!fprintf(pf_file, "%f\n", vSolutionQualityHistory[i]))
+				return false;
+		
+		fclose(pf_file);
+		return true;
+	}
+
+	return false;
+}
+
+CMscnSolution CRandomSearch::cGenerateSolution(int iIterations, int iInitPopulation, int iSeed, double & dResultQuality)
+{
 	if(pc_problem == NULL || iIterations < 1)
 		return CMscnSolution();
 
 	CRandom  c_rand;
 	if(iSeed == 0)
-		c_rand.vResetGlobalSeed();
+		c_rand.vSetGlobalSeed(rand());
 	else
 		c_rand.vSetGlobalSeed(iSeed);
 
@@ -48,22 +70,5 @@ CMscnSolution CRandomSearch::cGenerateSolution(int iIterations, int iSeed, doubl
 	dResultQuality = d_best_quality;
 	b_save_to_csv_file(v_solution_quality_history);
 	return c_best_solution;
-}
-
-bool CRandomSearch::b_save_to_csv_file(vector<double> &vSolutionQualityHistory)
-{
-	FILE *pf_file = fopen(CSV_FILE_NAME, "w");
-
-	if(pf_file != NULL)
-	{
-		for(size_t i = 0; i < vSolutionQualityHistory.size(); ++i)
-			if(!fprintf(pf_file, "%f\n", vSolutionQualityHistory[i]))
-				return false;
-		
-		fclose(pf_file);
-		return true;
-	}
-
-	return false;
 }
 
